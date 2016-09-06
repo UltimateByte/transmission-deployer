@@ -1,0 +1,56 @@
+#!/bin/bash
+# Multiple transmission-daemon deployer
+# Authors: UltimateByte
+# Website: https://www.terageek.org
+# Description: Creates new users and duplicates transmission-daemon for them
+# Version: 0.01
+
+# Don't use as such, this script is very incomplete
+
+### SETTINGS ##
+# The parent folder for your user's home directory (usually /home)
+homedir="/home"
+
+#############
+## Program ##
+#############
+
+# Misc Variables
+selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+# Prompt
+echo "Enter a username"
+echo "This username will also be used for transmission-daemon servicename"
+read -r username
+
+# User directory
+userdir="${homedir}/${username}"
+downloadsdir="${userdir}/downloads"
+incompletedir="${userdir}/incomplete"
+
+echo "Create new transmission server for ${username} ?"
+echo "Home direcotry for this user set to ${userdir}"
+
+# Prompt
+while true; do
+	read -e -i "y" -p "Continue? [Y/n]" yn
+	case $yn in
+	[Yy]* ) echo "Let's go!"; sleep 1; break;;
+	[Nn]* ) echo "Maybe next time!"; exit 0;;
+	* ) echo "Please answer yes or no.";;
+esac
+done
+
+if [ "$(grep "${username}" /etc/passwd)" ]; then
+	userexists="1"
+else
+  userexists="0"
+	# Adding user
+	echo "Creating ${username}"
+  useradd -m -d "${userdir}" "${username}"
+  echo "User created"
+  echo "Please, chose a password for ${username}"
+  passwd ${username}
+fi
+
+echo "Creating user's directories"
