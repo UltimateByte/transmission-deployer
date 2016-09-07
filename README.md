@@ -19,7 +19,7 @@ Tested on Debian 8.5, should also work with Ubuntu.
 * Completes the install and gives you relevant connexion info
 
 ## Usage  
-** Requires elevated privileges **  
+#### Requires elevated privileges
 
 Download the script  
 ````bash
