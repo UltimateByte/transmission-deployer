@@ -474,7 +474,7 @@ fn_setup_complete(){
 	echo "########################################################"
 	echo "Installation complete!"
 	echo "You can now try to run the daemon with:"
-	echo ".${initdir}/${tuprocess} start"
+	echo "${initdir}/${tuprocess} start"
 	echo ""
 	echo "Info:"
 	echo "Username: ${username}"
