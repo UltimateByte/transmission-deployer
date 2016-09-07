@@ -448,18 +448,20 @@ fn_create_config(){
 }
 
 fn_config_extra(){
-echo "Adjusting ${initdir}/${tuprocess} to fit user"
-# Process name to user process name
-sed -i "s/NAME=${deftransmission}/NAME=${tuprocess}/g" "${initdir}/${tuprocess}"
-# Process provides to user process name 
+echo "Adjusting ${initdir}/${tuprocess} to fit user..."
+# Replace default transmission process name ocurrences by user transmission process name
 sed -i "s/${deftransmission}/${tuprocess}/g" "${initdir}/${tuprocess}"
+echo "[ ok ] New process now fits user!"
 # Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
+echo "Updating config location info"
 sed -i "s@${tdefcfgdir}@${ucfgdir}@g" "${udefdir}"
-
+echo "[ ok ] Config location info updated!"
+echo ""
 
 # Process upon system boot
 echo "Allowing ${tuprocess} to run on boot"
 update-rc.d "${tuprocess}" defaults
+echo "[ ok ] update-rc.d applied!"
 }
 
 fn_start_back(){
