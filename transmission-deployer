@@ -256,7 +256,7 @@ echo "Adjusting ${initdir}/${tuprocess} to fit user"
 # Process name
 sed -i "s/NAME=${deftransmission}/NAME=${tuprocess}/g" "${initdir}/${tuprocess}"
 # Username
-sed -i "s/USER=${tservice}/USER=${username}/g" "${initdir}/${tuprocess}"
+sed -i 's/USER='"${tservice}"'/USER='"${username}"'/g' "${initdir}/${tuprocess}"
 # Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
 sed -i 's/CONFIG_DIR="'"${tdefcfgdir}"'"/CONFIG_DIR="'"${ucfgdir}"'"/g' "${udefdir}"
 
@@ -266,7 +266,7 @@ update-rc.d "${tuprocess}" defaults
 
 echo "All done"
 echo "You can now try to run the daemon with:"
-echo "./${initdir}/${tuprocess} start"
+echo ".${initdir}/${tuprocess} start"
 echo "Info:"
 echo "Username: ${username}"
 echo "RPC Port: ${trpcport}"
