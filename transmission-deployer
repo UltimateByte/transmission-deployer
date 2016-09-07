@@ -131,14 +131,14 @@ read -rs tpasswd
 echo "Please, set an RPC port (default 9091)"
 read -r trpcport
 
-if [ -d "${bindir}/${tservice}" ]; then
+if [ -f "${bindir}/${tservice}" ]; then
 	cp -v "${bindir}/${tservice}" "${bindir}/${tuprocess}"
 else
 	echo "Fatal error, could not find ${bindir}/${tservice}"
 	exit 1
 fi
 
-if [ -d "${initdir}/${tservice}" ]; then
+if [ -f "${initdir}/${tservice}" ]; then
 	cp -v "${initdir}/${tservice}" "${initdir}/${tuprocess}"
 else
 	echo "Fatal error, could not find ${initdir}/${tservice}"
