@@ -339,7 +339,7 @@ fn_user_dirs(){
 	chown "${username}":"${tservice}" "${userdir}"
 	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
 	chmod 775 "${sbdirectories}"
-	chmod -R 770 "${userdir}
+	chmod -R 770 "${userdir}"
 }
 
 ### Dev notes
