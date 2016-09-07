@@ -1,7 +1,26 @@
 # transmission-deployer
-Deploy multiple transmission-daemon
+Deploy multiple transmission-daemons in Debian based distros.  
+Tested on Debian 8.5, should also work with Ubuntu.  
 
-## Usage
+### Requirements
+* Have a Debian based distro
+* Have transmission-daemon installed 
+* Have the default transmission-daemon empty
+ 
+### What it does
+* Checks your current installation
+* Creates a new user
+* Creates download and incomplete directories with right permissiosn
+* Adds the user to debian-transmission group
+* Duplicates original transmission-daemon to a new one corresponding to the corresponding transmission-daemon-user
+* Edits all required files
+* Allows the process to be started and started upon boot
+* Asks you for RPC info (port & password)
+* Completes the install and gives you relevant connexion info
+
+## Usage  
+** Requires elevated privileges **  
+
 Download the script  
 ````bash
 wget https://raw.githubusercontent.com/UltimateByte/transmission-deployer/master/transmission-deployer
@@ -24,7 +43,10 @@ Example
 ./transmission-deployer deploy downloader
 ````
 
-
+### Wishlist/Devlist
+* Add quota management
+* Be more versatile if user changed default transmission-daemon
+* Add a check to know if default transmission-daemon is started or not (for now it will always close it before the process then restart it after the process)
 
 # Sample output
 
