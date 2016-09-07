@@ -15,10 +15,29 @@ homedir="/home"
 ## Program ##
 #############
 
+	
+# User Input
+echo "Enter a username"
+echo "This username will also be used for transmission-daemon servicename"
+read -r username
+
+# User config
+userdir="${homedir}/${username}"
+downloadsdir="${userdir}/downloads"
+incompletedir="${userdir}/incomplete"
+tuprocess="transmission-daemon-${username}"
+tconfig="/etc/${tuprocess}/settings.json"
+
 # Misc Variables
 selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 tprocess="debian-transmission"
 deftransmission="transmission-daemon"
+bindir="/usr/bin"
+initdir="/etc/init.d"
+libdir="/var/lib"
+etcdir="/etc"
+defdir="${etcdir}/default"
+utlibconfig="${libdir}/${tuprocess}/info/settings.json"
 
 # Stopping transmission
 if [ -f /etc/init.d/transmission-daemon ]; then
@@ -28,18 +47,7 @@ else
 	echo "Please, install transmission-daemon before running ${selfname}"
 	exit 1
 fi
-	
-# Prompt
-echo "Enter a username"
-echo "This username will also be used for transmission-daemon servicename"
-read -r username
 
-# User directory
-userdir="${homedir}/${username}"
-downloadsdir="${userdir}/downloads"
-incompletedir="${userdir}/incomplete"
-uprocess="transmission-daemon-${username}"
-tconfig="/etc/${uprocess}/settings.json"
 
 echo "Create new transmission server for user: ${username} ?"
 echo "Home direcotry for this user set to dir: ${userdir}"
@@ -73,17 +81,88 @@ fi
 if [ -d "${incompletedir}" ]; then
 	mkdir -pv "${incompletedir}"
 fi
-
+echo "Applying permissions"
 chown "${username}":"${username}" "${userdir}"
 chown -R "${username}":"${tprocess}" "${userdir}/*"
 chmod -R 770 "${userdir}/*"
 
+### Dev notes
+## Useful folders
+# cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2 
+# cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2 
+# cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2 
+# cp -a /etc/transmission-daemon /etc/transmission-daemon2 
+# cp /etc/default/transmission-daemon /etc/default/transmission-daemon2 
+# chmod –R 777 /usr/bin/transmission-daemon2 
+# chmod –R 777 /etc/init.d/transmission-daemon2 
+# chmod –R 777 /var/lib/transmission-daemon2 
+# chmod –R 777 /etc/transmission-daemon2
+# chmod –R 777 /etc/default/transmission-daemon2
 
 
 echo "Please, set transmission password"
 read -s tpasswd
 echo "Please, set an RPC port (default 9091)"
 read -r trpcport
+
+### Dev notes
+## Useful stuff as per https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
+# cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2 
+# cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2 
+# cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2 
+# cp -a /etc/transmission-daemon /etc/transmission-daemon2 
+# cp /etc/default/transmission-daemon /etc/default/transmission-daemon2 
+# chmod –R 777 /usr/bin/transmission-daemon2 
+# chmod –R 777 /etc/init.d/transmission-daemon2 
+# chmod –R 777 /var/lib/transmission-daemon2 
+# chmod –R 777 /etc/transmission-daemon2
+# chmod –R 777 /etc/default/transmission-daemon2
+
+if [ -d "${bindir}/${tprocess}" ]; then
+	cp -v "${bindir}/${tprocess}" "${bindir}/${tuprocess}"
+else
+	echo "Fatal error, could not find ${bindir}/${tprocess}"
+	exit 1
+fi
+
+if [ -d "${initdir}/${tprocess}" ]; then
+	cp -v "${initdir}/${tprocess}" "${initdir}/${tuprocess}"
+else
+	echo "Fatal error, could not find ${initdir}/${tprocess}"
+	exit 1
+fi
+
+if [ -d "${libdir}/${tprocess}" ]; then
+	cp -av "${libdir}/${tprocess}" "${libdir}/${tuprocess}"
+else
+	echo "Fatal error, could not find ${libdir}/${tprocess}"
+	exit 1
+fi
+
+if [ -d "${etcdir}/${tprocess}" ]; then
+	cp -av "${etcdir}/${tprocess}" "${etcdir}/${tuprocess}"
+else
+	echo "Fatal error, could not find ${etcdir}/${tprocess}"
+	exit 1
+fi
+
+if [ -d "${defdir}/${tprocess}" ]; then
+	cp -v "${defdir}/${tprocess}" "${defdir}/${tuprocess}"
+else
+	echo "Fatal error, could not find ${defdir}/${tprocess}"
+	exit 1
+fi
+
+if [ -d "${etcdir}/${tuprocess}" ]; then
+	if [ ! -f "${tconfig}" ]; then
+		echo "Warning! No config file was found in ${etcdir}/${tuprocess}"
+		echo "Creating config file"
+		touch "${tconfig}"
+	fi
+else
+	echo "Fatal error, "${etcdir}/${tuprocess}" was not successfully created"
+	exit 1
+fi
 
 echo "\{
     \"alt-speed-down\": 50,
@@ -155,4 +234,7 @@ echo "\{
     \"upload-limit-enabled\": 0,
     \"upload-slots-per-torrent\": 20,
     \"utp-enabled\": true
-\}" >> "${tconfig}"
+\}" > "${tconfig}"
+
+echo "Symlinking config file"
+ln -vsf ${tconfig} ${utlibconfig}
