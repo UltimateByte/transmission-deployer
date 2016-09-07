@@ -127,7 +127,7 @@ fn_sorry_exit(){
 	echo "Please, take a moment to review your settings."
 	echo "You're using this script as root. Be extra careful."
 	echo ""
-	echo "You choose to ${command} transmission-daemon for ${username}"
+	echo "You chose to ${command} transmission-daemon for ${username}"
 	sleep 2
 	echo ""
 }
