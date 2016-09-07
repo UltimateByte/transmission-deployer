@@ -160,7 +160,7 @@ if [ -d "${etcdir}/${tuprocess}" ]; then
 		touch "${tconfig}"
 	fi
 else
-	echo "Fatal error, "${etcdir}/${tuprocess}" was not successfully created"
+	echo "Fatal error, ${etcdir}/${tuprocess} was not successfully created"
 	exit 1
 fi
 
@@ -237,4 +237,4 @@ echo "\{
 \}" > "${tconfig}"
 
 echo "Symlinking config file"
-ln -vsf ${tconfig} ${utlibconfig}
+ln -vsf "${tconfig}" "${utlibconfig}"
