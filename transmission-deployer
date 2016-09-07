@@ -21,30 +21,34 @@ echo "Enter a username"
 echo "This username will also be used for transmission-daemon servicename"
 read -r username
 
-# User config
-userdir="${homedir}/${username}"
-downloadsdir="${userdir}/downloads"
-incompletedir="${userdir}/incomplete"
-tuprocess="transmission-daemon-${username}"
-tconfig="/etc/${tuprocess}/settings.json"
-
 # Misc Variables
 selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 tprocess="debian-transmission"
 deftransmission="transmission-daemon"
+cfgfile="settings.json"
 bindir="/usr/bin"
 initdir="/etc/init.d"
 libdir="/var/lib"
 etcdir="/etc"
+
+# User config
+userdir="${homedir}/${username}"
+downloadsdir="${userdir}/downloads"
+incompletedir="${userdir}/incomplete"
+tuprocess="${deftransmission}-${username}"
+tconfig="${etcdir}/${tuprocess}/settings.json"
+
+
 defdir="${etcdir}/default"
-utlibconfig="${libdir}/${tuprocess}/info/settings.json"
+utlibconfig="${libdir}/${tuprocess}/info/${cfgfile}"
+tdefprocess="${initdir}/${deftransmission}"
 
 # Stopping transmission
-if [ -f /etc/init.d/transmission-daemon ]; then
+if [ -f "${tdefprocess}" ]; then
 	echo "Stopping transmission-daemon"
-	/etc/init.d/"${deftransmission}" stop
+	"${tdefprocess}" stop
 else
-	echo "Please, install transmission-daemon before running ${selfname}"
+	echo "Please, install ${deftransmission} before running ${selfname}"
 	exit 1
 fi
 
