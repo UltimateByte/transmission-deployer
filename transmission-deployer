@@ -250,7 +250,7 @@ fn_remove_user(){
 		if [ -d "${userdir}" ]; then
 			echo "Info! ${username} already exists"
 			echo "Do you wish to remove the user and its home directory ?"
-			"[WARNING] Any file in ${userdir} will be lost!"
+			echo "[WARNING] Any file in ${userdir} will be lost!"
 			while true; do
 				read -e -p "Continue? [y/n]" yn
 				case $yn in
