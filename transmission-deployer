@@ -6,8 +6,12 @@
 # Version: 0.1
 
 ### SETTINGS ##
-# The parent folder for your user's home directory (usually /home)
+# Home directory for users (usually /home)
 homedir="/home"
+# Seedboxes directory: a subfolder containing seedbox users
+# Start with a / since it's a subfolder
+# Strip it if you don't wish to install in a subfolder
+sbdir="/seedbox"
 # Default shell defined with usermod -s (usually /bin/bash)
 usershell="/bin/bash"
 
@@ -80,8 +84,10 @@ tdefprocesspath="${initdir}/${deftransmission}"
 tdefcfgdir="${libdir}/${deftransmission}/info"
 
 # User config
+# Seedboxes directories in home
+sbdirectories="${homedir}${sbdir}"
 # User home directory
-userdir="${homedir}/${username}"
+userdir="${sbdirectories}/${username}"
 # User download directory
 downloadsdir="${userdir}/downloads"
 # User incomplete directory
@@ -297,7 +303,11 @@ fn_create_user(){
 		echo "Create new transmission server for user: ${username} ?"
 		fn_prompt_continue_y
 		# Adding user
-		echo "Creating ${username}"
+		if [ ! -d ${sbdirectories} ]; then
+			echo "creating ${sbdirectories}..."
+			mkdir -p "${sbdirectories}"
+		fi
+		echo "Creating ${username}...."
 		useradd -m -d "${userdir}" "${username}"
 		echo "Default shell ${usershell} for ${username}"
 		usermod -s "${usershell}" "${username}"
