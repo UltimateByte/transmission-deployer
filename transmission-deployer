@@ -190,11 +190,20 @@ fn_check_previously_installed(){
 		fi
 }
 
-fn_create_user(){
+# Check if user exists, returns userexists=0/1
+fn_check_user_exists(){
 	if [ "$(grep "${username}" /etc/passwd)" ]; then
-		echo "Info! ${username} exists"
-		userexists=1
+		userexists="1"
+	else
+		userexists="0"
+	fi	
+}
+
+# Prompts for removing an existing user
+fn_remove_user(){
+	if [ "${userexists}" == "1" ]; then
 		if [ -d "${userdir}" ]; then
+			echo "Info! ${username} already exists"
 			echo "Do you wish to remove the user and its home directory ?"
 			"[WARNING] Any file in ${userdir} will be lost!"
 			while true; do
@@ -206,9 +215,31 @@ fn_create_user(){
 				esac
 			done
 			if [ "${cleanuser}" == "yes" ]; then
-				
-			
-	else
+				echo "Closing ${username} processes"
+				echo "Info! Press ctrl + c to abort !"
+				sleep 2
+				killall -KILL -u "${username}"
+				echo "[ ok ] Closed processes"
+				echo "Removing user: ${username} and its home: ${userdir}"
+				echo "Info! Press ctrl + c to abort !"
+				sleep 1; echo "5"
+				sleep 1; echo "4"
+				sleep 1; echo "3"
+				sleep 1; echo "2"
+				sleep 1; echo "1"
+				sleep 1; echo "removing ${username}"
+				userdel -r ${username}
+				echo "[ ok ] Removed previous ${username} and its home directory"
+			fi
+		fi
+	fi
+}
+
+fn_create_user(){
+	if [ "${userexists}" == 1 ]; then
+		fn_remove_user
+	fi
+	if [ "${userexists}" == "0" ]||[ "${cleanuser}" == "1"]; then
 		echo "Info! ${username} doesn't exist"
 		echo "Home direcotry for this user set to dir: ${userdir}"
 		echo "Create new transmission server for user: ${username} ?"
@@ -216,59 +247,38 @@ fn_create_user(){
 		# Adding user
 		echo "Creating ${username}"
 		useradd -m -d "${userdir}" "${username}"
+		echo "Default shell ${usershell}" for ${username}
 		usermod -s "${usershell}" "${username}"
+		# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
+		echo "Adding user ${username} to group ${tservice}..."
+		echo "Info! It fixes permission issues but allows this user to access other files from the group and reciprocally"
+		usermod -a -G "${tservice}" "${username}"
 		echo "[ ok ] User created"
 		echo "Please, choose a password for ${username}:"
 		passwd "${username}"
-fi
+	fi
 }
 
-
-
-
-
-# Prompt
-while true; do
-	read -r -e -i "y" -p "Continue? [Y/n]" yn
-	case $yn in
-	[Yy]* ) echo "Let's go!"; sleep 1; break;;
-	[Nn]* ) echo "Maybe next time!"; exit 0;;
-	* ) echo "Please answer yes or no.";;
-esac
-done
-
-if [ "$(grep "${username}" /etc/passwd)" ]; then
-	echo "User already exists, not creating it"
-else
-	
-	# Adding user
-	echo "Creating ${username}"
-	useradd -m -d "${userdir}" "${username}"
-	echo "User created"
-	echo "Please, chose a password for ${username}"
-	passwd "${username}"
-fi
-
-echo "Creating user's directories"
-if [ ! -d "${downloadsdir}" ]; then
-	mkdir -pv "${downloadsdir}"
-fi
-if [ ! -d "${incompletedir}" ]; then
-	mkdir -pv "${incompletedir}"
-fi
-echo "Applying permissions"
-chown "${username}":"${username}" "${userdir}"
-chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
-chmod -R 770 "${downloadsdir}" "${incompletedir}"
-# Don't add user to group for now, might fix permissions by editting init.d/transmission-daemon-username
-# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
-#echo "Adding user ${username} to group ${tservice}"
-#echo "Note: Will fix permission issues but allow this user to access other files from the group"
-#usermod -a -G "${tservice}" "${username}"
-
+fn_user_dirs(){
+	echo "Creating user's directories..."
+	sleep 1
+	echo "${downloadsdir} && ${incompletedir}"
+	if [ ! -d "${downloadsdir}" ]; then
+		mkdir -p "${downloadsdir}"
+	fi
+	if [ ! -d "${incompletedir}" ]; then
+		mkdir -p "${incompletedir}"
+	fi
+	echo "Applying permissions..."
+	sleep 1
+	chown "${username}":"${username}" "${userdir}"
+	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
+	chmod -R 770 "${downloadsdir}" "${incompletedir}"
+}
 
 ### Dev notes
-## Useful stuff as per https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
+## Useful stuff as per 
+# https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
 # cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2 
 # cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2 
 # cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2 
