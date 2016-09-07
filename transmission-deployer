@@ -131,38 +131,38 @@ read -rs tpasswd
 echo "Please, set an RPC port (default 9091)"
 read -r trpcport
 
-if [ -f "${bindir}/${tservice}" ]; then
-	cp -v "${bindir}/${tservice}" "${bindir}/${tuprocess}"
+if [ -f "${bindir}/${deftransmission}" ]; then
+	cp -v "${bindir}/${deftransmission}" "${bindir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${bindir}/${tservice}"
+	echo "Fatal error, could not find ${bindir}/${deftransmission}"
 	exit 1
 fi
 
-if [ -f "${initdir}/${tservice}" ]; then
-	cp -v "${initdir}/${tservice}" "${initdir}/${tuprocess}"
+if [ -f "${initdir}/${deftransmission}" ]; then
+	cp -v "${initdir}/${deftransmission}" "${initdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${initdir}/${tservice}"
+	echo "Fatal error, could not find ${initdir}/${deftransmission}"
 	exit 1
 fi
 
-if [ -d "${libdir}/${tservice}" ]; then
-	cp -av "${libdir}/${tservice}" "${libdir}/${tuprocess}"
+if [ -d "${libdir}/${deftransmission}" ]; then
+	cp -av "${libdir}/${deftransmission}" "${libdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${libdir}/${tservice}"
+	echo "Fatal error, could not find ${libdir}/${deftransmission}"
 	exit 1
 fi
 
-if [ -d "${etcdir}/${tservice}" ]; then
-	cp -av "${etcdir}/${tservice}" "${etcdir}/${tuprocess}"
+if [ -d "${etcdir}/${deftransmission}" ]; then
+	cp -av "${etcdir}/${deftransmission}" "${etcdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${etcdir}/${tservice}"
+	echo "Fatal error, could not find ${etcdir}/${deftransmission}"
 	exit 1
 fi
 
-if [ -d "${defdir}/${tservice}" ]; then
-	cp -v "${defdir}/${tservice}" "${defdir}/${tuprocess}"
+if [ -d "${defdir}/${deftransmission}" ]; then
+	cp -v "${defdir}/${deftransmission}" "${defdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${defdir}/${tservice}"
+	echo "Fatal error, could not find ${defdir}/${deftransmission}"
 	exit 1
 fi
 
