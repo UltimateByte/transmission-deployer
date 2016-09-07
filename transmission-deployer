@@ -3,9 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.02
-
-# Don't use as such, this script is very incomplete
+# Version: 0.1
 
 ### SETTINGS ##
 # The parent folder for your user's home directory (usually /home)
@@ -508,9 +506,13 @@ if [ "${command}" == "deploy" ]; then
 	fn_user_dirs
 	fn_transmission_duplicate
 	fn_create_config
+	fn_config_extra
+	fn_start_back
+	fn_setup_complete
 elif [ "${command}" == "clean" ]; then
 	fn_check_previously_installed
 	fn_check_user_exists
 	fn_remove_user
+	fn_start_back
 	fn_clean_complete
 fi
