@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.01
+# Version: 0.02
 
 # Don't use as such, this script is very incomplete
 
@@ -23,27 +23,44 @@ selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 fn_usage(){
 	echo "Info! Please, specify a command and a username"
 	echo "Usage: ./${selfname} [command] [username]"
-	echo "Available commands: deploy"
+	echo "Available commands: deploy; clean"
 }
 
 # Check user input
+# If nothing has been inputted
 if [ -z "$1" ] || [ -z "$2" ]; then
+	# Info about script usage
 	fn_usage
 	exit 0
+# If there is too much args
 elif [ -n "$3" ]; then
 	echo "[ERROR] Too many arguments!"
+	# Info about script usage
 	fn_usage
 	exit 1
 else
 	username="${2}"
 fi
+# Set command to something relevant
 if [ "$1" == "deploy" ]; then
 	command="deploy"
-else 
+elif [ "$1" == "clean" ]; then
+	command="clean"
+# And exit on invalid command
+else
 	echo "[ERROR] Invalid command!"
+	# Info about script usage
 	fn_usage
 	exit 1
 fi
+
+# Check that the script is launched with elevated privileges
+fn_check_root(){
+	if [ "$(id -u)" != "0" ]; then
+		echo "[ERROR] This script must be run with elevated privileges"
+		exit 1
+	fi
+}
 
 ## Variables ###
 # MISC
@@ -84,15 +101,6 @@ ucfgdir="${libdir}/${tuprocess}/info"
 # User transmission program
 tuprocesspath="${initdir}/${tuprocess}"
 
-# Welcome
-echo "Transmission server Deployment"
-echo "########################################################"
-echo "Welcome!"
-echo ""
-echo "You chosed to ${command} transmission-daemon for ${username}"
-sleep 2
-echo ""
-
 fn_prompt_continue_y(){
 	while true; do
 		read -e -i "y" -p "Continue? [Y/n]" yn
@@ -102,6 +110,25 @@ fn_prompt_continue_y(){
 		* ) echo "Please answer yes or no.";;
 	esac
 	done
+}
+
+fn_sorry_exit(){
+	echo "This setup can't go further, sorry!"
+	echo "Exiting..."
+	exit 1
+}
+
+# Welcome
+fn_welcome(){
+echo "Transmission server deployment"
+echo "########################################################"
+echo "Welcome!"
+echo ""
+echo "Please, take a moment to review your settings."
+echo "You're using this script as root. Be extra careful."
+echo "You chosed to ${command} transmission-daemon for ${username}"
+sleep 2
+echo ""
 }
 
 # Checks that everything is allright before starting
@@ -119,6 +146,14 @@ fn_check(){
 		exit 1
 	fi
 	# Checking required files and directories
+	# Homedir
+	if [ -d "${homedir}" ]; then
+		echo "[ ok ] Folder ${homedir} found"
+	else
+		echo "[ERROR] Could not find folder ${homedir}"
+		echo "Please, set a valid homedir value"
+		sleep 2
+	fi
 	# Main program : /usr/bin/transmission-daemon
 	if [ -f "${bindir}/${deftransmission}" ]; then
 		echo "[ ok ] File ${bindir}/${deftransmission} found"
@@ -277,7 +312,6 @@ fn_user_dirs(){
 }
 
 ### Dev notes
-## Useful stuff as per 
 # https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
 # cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2 
 # cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2 
@@ -290,132 +324,119 @@ fn_user_dirs(){
 # chmod –R 777 /etc/transmission-daemon2
 # chmod –R 777 /etc/default/transmission-daemon2
 
-echo "Please, set transmission RPC password"
-echo "Warning! No confirmation & won't be given back"
-read -rs tpasswd
-echo "Please, set an RPC port (default 9091)"
-read -r trpcport
+fn_transmission_duplicate(){
+	echo ""
+	echo "Duplicating ${deftransmission} to ${tuprocess}..."
+	cp "${bindir}/${deftransmission}" "${bindir}/${tuprocess}"
+	cp "${initdir}/${deftransmission}" "${initdir}/${tuprocess}"
+	cp -a "${libdir}/${deftransmission}" "${libdir}/${tuprocess}"
+	cp -a "${etcdir}/${deftransmission}" "${etcdir}/${tuprocess}"
+	cp "${defdir}/${deftransmission}" "${defdir}/${tuprocess}"
+	# A little check
+	if [ ! -d "${etcdir}/${tuprocess}" ]; then
+		echo "[ERROR] ${etcdir}/${tuprocess} was not created"
+		fn_sorry_exit
+	fi
+	echo "[ ok ] ${tuprocess} duplicated"
+}
 
-if [ -f "${bindir}/${deftransmission}" ]; then
-	cp -v "${bindir}/${deftransmission}" "${bindir}/${tuprocess}"
-else
-	echo "Fatal error, could not find ${bindir}/${deftransmission}"
-	exit 1
-fi
-
-if [ -f "${initdir}/${deftransmission}" ]; then
-	cp -v "${initdir}/${deftransmission}" "${initdir}/${tuprocess}"
-else
-	echo "Fatal error, could not find ${initdir}/${deftransmission}"
-	exit 1
-fi
-
-if [ -d "${libdir}/${deftransmission}" ]; then
-	cp -av "${libdir}/${deftransmission}" "${libdir}/${tuprocess}"
-else
-	echo "Fatal error, could not find ${libdir}/${deftransmission}"
-	exit 1
-fi
-
-if [ -d "${etcdir}/${deftransmission}" ]; then
-	cp -av "${etcdir}/${deftransmission}" "${etcdir}/${tuprocess}"
-else
-	echo "Fatal error, could not find ${etcdir}/${deftransmission}"
-	exit 1
-fi
-
-if [ -f "${defdir}/${deftransmission}" ]; then
-	cp -v "${defdir}/${deftransmission}" "${defdir}/${tuprocess}"
-else
-	echo "Fatal error, could not find ${defdir}/${deftransmission}"
-	exit 1
-fi
-
-if [ -d "${etcdir}/${tuprocess}" ]; then
+# Generate config file
+fn_create_config(){
+	echo ""
+	echo "Info! Please, set the transmission RPC password"
+	echo "Warning! No confirmation & won't be given back"
+	echo "RPC password:"
+	read -r rpcpasswd
+	echo "Please, set an RPC port (default 9091)"
+	echo "RPC port:"
+	read -r trpcport
+	echo ""
+	echo "Creating config file..."
+	if [ ! -d "${etcdir}/${tuprocess}" ]; then
+		fn_sorry_exit
+	fi
+	# Check if config file exists, inform if it doesn't since it's not normal
 	if [ ! -f "${tuconfig}" ]; then
-		echo "Warning! No config file was found in ${etcdir}/${tuprocess}"
-		echo "Creating config file"
+		echo "Info! No config file was found in ${etcdir}/${tuprocess}"
+		echo "Don't worry, this setup will build it from scratch anyways"
 		touch "${tuconfig}"
 	fi
-else
-	echo "Fatal error, ${etcdir}/${tuprocess} was not successfully created"
-	exit 1
-fi
+	# Write to actual config file
+	echo "{
+	\"alt-speed-down\": 50,
+	\"alt-speed-enabled\": false,
+	\"alt-speed-time-begin\": 540,
+	\"alt-speed-time-day\": 127,
+	\"alt-speed-time-enabled\": false,
+	\"alt-speed-time-end\": 1020,
+	\"alt-speed-up\": 50,
+	\"bind-address-ipv4\": \"0.0.0.0\",
+	\"bind-address-ipv6\": \"::\",
+	\"blocklist-enabled\": false,
+	\"blocklist-url\": \"http://www.example.com/blocklist\",
+	\"cache-size-mb\": 4,
+	\"dht-enabled\": true,
+	\"download-dir\": \"${downloadsdir}\",
+	\"download-limit\": 100,
+	\"download-limit-enabled\": 0,
+	\"download-queue-enabled\": true,
+	\"download-queue-size\": 5,
+	\"encryption\": 1,
+	\"idle-seeding-limit\": 30,
+	\"idle-seeding-limit-enabled\": false,
+	\"incomplete-dir\": \"${incompletedir}\",
+	\"incomplete-dir-enabled\": true,
+	\"lpd-enabled\": false,
+	\"max-peers-global\": 200,
+	\"message-level\": 1,
+	\"peer-congestion-algorithm\": \"\",
+	\"peer-id-ttl-hours\": 6,
+	\"peer-limit-global\": 200,
+	\"peer-limit-per-torrent\": 50,
+	\"peer-port\": 51413,
+	\"peer-port-random-high\": 65535,
+	\"peer-port-random-low\": 49152,
+	\"peer-port-random-on-start\": true,
+	\"peer-socket-tos\": \"default\",
+	\"pex-enabled\": true,
+	\"port-forwarding-enabled\": false,
+	\"preallocation\": 1,
+	\"prefetch-enabled\": 1,
+	\"queue-stalled-enabled\": true,
+	\"queue-stalled-minutes\": 30,
+	\"ratio-limit\": 2,
+	\"ratio-limit-enabled\": false,
+	\"rename-partial-files\": true,
+	\"rpc-authentication-required\": true,
+	\"rpc-bind-address\": \"0.0.0.0\",
+	\"rpc-enabled\": true,
+	\"rpc-password\": \"${rpcpasswd}\",
+	\"rpc-port\": ${trpcport},
+	\"rpc-url\": \"/transmission/\",
+	\"rpc-username\": \"${username}\",
+	\"rpc-whitelist\": \"127.0.0.1\",
+	\"rpc-whitelist-enabled\": false,
+	\"scrape-paused-torrents-enabled\": true,
+	\"script-torrent-done-enabled\": false,
+	\"script-torrent-done-filename\": \"\",
+	\"seed-queue-enabled\": false,
+	\"seed-queue-size\": 10,
+	\"speed-limit-down\": 12000,
+	\"speed-limit-down-enabled\": false,
+	\"speed-limit-up\": 500,
+	\"speed-limit-up-enabled\": true,
+	\"start-added-torrents\": true,
+	\"trash-original-torrent-files\": false,
+	\"umask\": 7,
+	\"upload-limit\": 100,
+	\"upload-limit-enabled\": 0,
+	\"upload-slots-per-torrent\": 20,
+	\"utp-enabled\": true
+	}" > "${tuconfig}"
 
-echo "{
-    \"alt-speed-down\": 50,
-    \"alt-speed-enabled\": false,
-    \"alt-speed-time-begin\": 540,
-    \"alt-speed-time-day\": 127,
-    \"alt-speed-time-enabled\": false,
-    \"alt-speed-time-end\": 1020,
-    \"alt-speed-up\": 50,
-    \"bind-address-ipv4\": \"0.0.0.0\",
-    \"bind-address-ipv6\": \"::\",
-    \"blocklist-enabled\": false,
-    \"blocklist-url\": \"http://www.example.com/blocklist\",
-    \"cache-size-mb\": 4,
-    \"dht-enabled\": true,
-    \"download-dir\": \"${downloadsdir}\",
-    \"download-limit\": 100,
-    \"download-limit-enabled\": 0,
-    \"download-queue-enabled\": true,
-    \"download-queue-size\": 5,
-    \"encryption\": 1,
-    \"idle-seeding-limit\": 30,
-    \"idle-seeding-limit-enabled\": false,
-    \"incomplete-dir\": \"${incompletedir}\",
-    \"incomplete-dir-enabled\": true,
-    \"lpd-enabled\": false,
-    \"max-peers-global\": 200,
-    \"message-level\": 1,
-    \"peer-congestion-algorithm\": \"\",
-    \"peer-id-ttl-hours\": 6,
-    \"peer-limit-global\": 200,
-    \"peer-limit-per-torrent\": 50,
-    \"peer-port\": 51413,
-    \"peer-port-random-high\": 65535,
-    \"peer-port-random-low\": 49152,
-    \"peer-port-random-on-start\": true,
-    \"peer-socket-tos\": \"default\",
-    \"pex-enabled\": true,
-    \"port-forwarding-enabled\": false,
-    \"preallocation\": 1,
-    \"prefetch-enabled\": 1,
-    \"queue-stalled-enabled\": true,
-    \"queue-stalled-minutes\": 30,
-    \"ratio-limit\": 2,
-    \"ratio-limit-enabled\": false,
-    \"rename-partial-files\": true,
-    \"rpc-authentication-required\": true,
-    \"rpc-bind-address\": \"0.0.0.0\",
-    \"rpc-enabled\": true,
-    \"rpc-password\": \"${tpasswd}\",
-    \"rpc-port\": ${trpcport},
-    \"rpc-url\": \"/transmission/\",
-    \"rpc-username\": \"${username}\",
-    \"rpc-whitelist\": \"127.0.0.1\",
-    \"rpc-whitelist-enabled\": false,
-    \"scrape-paused-torrents-enabled\": true,
-    \"script-torrent-done-enabled\": false,
-    \"script-torrent-done-filename\": \"\",
-    \"seed-queue-enabled\": false,
-    \"seed-queue-size\": 10,
-    \"speed-limit-down\": 12000,
-    \"speed-limit-down-enabled\": false,
-    \"speed-limit-up\": 500,
-    \"speed-limit-up-enabled\": true,
-    \"start-added-torrents\": true,
-    \"trash-original-torrent-files\": false,
-    \"umask\": 7,
-    \"upload-limit\": 100,
-    \"upload-limit-enabled\": 0,
-    \"upload-slots-per-torrent\": 20,
-    \"utp-enabled\": true
-}" > "${tuconfig}"
-
-echo "Symlinking config file"
-ln -vsf "${tuconfig}" "${utlibconfig}"
+	echo "Symlinking config file"
+	ln -vsf "${tuconfig}" "${utlibconfig}"
+}
 
 echo "Adjusting ${initdir}/${tuprocess} to fit user"
 # Process name
@@ -430,11 +451,16 @@ sed -i 's/CONFIG_DIR="'"${tdefcfgdir}"'"/CONFIG_DIR="'"${ucfgdir}"'"/g' "${udefd
 echo "Allowing ${tuprocess} to run on boot"
 update-rc.d "${tuprocess}" defaults
 
-echo "All done"
+echo "Transmission server Deployment"
+echo "########################################################"
+echo "Installation complete!"
 echo "You can now try to run the daemon with:"
 echo ".${initdir}/${tuprocess} start"
+echo ""
 echo "Info:"
 echo "Username: ${username}"
 echo "RPC Port: ${trpcport}"
-echo "Passwords: You set them."
+echo "RPC Password: ${rpcpasswd}"
 echo "RPC URL: /transmission"
+echo ""
+echo "Credits: UltimateByte"
