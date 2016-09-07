@@ -105,11 +105,12 @@ fn_prompt_continue_y(){
 	while true; do
 		read -e -i "y" -p "Continue? [Y/n]" yn
 		case $yn in
-		[Yy]* ) echo "Let's go!"; sleep 1; break;;
-		[Nn]* ) echo "Aborting!"; exit 0;;
+			[Yy]* ) echo "Let's go!"; sleep 1; break;;
+			[Nn]* ) echo "Aborting!"; exit 0;;
 		* ) echo "Please answer yes or no.";;
-	esac
+		esac
 	done
+	echo ""
 }
 
 fn_sorry_exit(){
@@ -119,16 +120,18 @@ fn_sorry_exit(){
 }
 
 # Welcome
-fn_welcome(){
-echo "Transmission server deployment"
-echo "########################################################"
-echo "Welcome!"
-echo ""
-echo "Please, take a moment to review your settings."
-echo "You're using this script as root. Be extra careful."
-echo "You chosed to ${command} transmission-daemon for ${username}"
-sleep 2
-echo ""
+	fn_welcome(){
+	echo ""
+	echo "Transmission server deployment"
+	echo "########################################################"
+	echo "Welcome!"
+	echo ""
+	echo "Please, take a moment to review your settings."
+	echo "You're using this script as root. Be extra careful."
+	echo ""
+	echo "You choose to ${command} transmission-daemon for ${username}"
+	sleep 2
+	echo ""
 }
 
 # Checks that everything is allright before starting
@@ -196,11 +199,15 @@ fn_stop_transmission(){
 	if [ -f "${tdefprocesspath}" ]; then
 		echo "Stopping ${deftransmission} in order to continue the process"
 		"${tdefprocesspath}" stop
+		deftransmissionstopped="1"
+	else
+		deftransmissionstopped="0"
 	fi
 	if [ -f "${tuprocesspath}" ]; then
 		echo "Stopping ${tuprocess} in order to continue the process"
 		"${tuprocesspath}" stop
 	fi
+	echo ""
 }
 
 fn_check_previously_installed(){
@@ -216,12 +223,14 @@ fn_check_previously_installed(){
 			* ) echo "Please answer yes or no.";;
 			esac
 		done
+		echo ""
 		if [ "${cleanoldtransmission}" == "yes" ]; then
 			echo "Removing ${tuprocess} files"
 			rm -R "${bindir:?}/${tuprocess:?}" "${initdir:?}/${tuprocess:?}" "${libdir:?}/${tuprocess:?}" "${etcdir:?}/${tuprocess:?}" "${defdir:?}/${tuprocess:?}"
 			echo "Removing ${tuprocess} from rc.d"
 			update-rc.d "${tuprocess}" remove
 			echo "[ ok ] Previous installation cleaned."
+			echo ""
 		fi
 	fi
 }
@@ -250,6 +259,7 @@ fn_remove_user(){
 				* ) echo "Please answer yes or no.";;
 				esac
 			done
+			echo ""
 			if [ "${cleanuser}" == "yes" ]; then
 				echo "Closing ${username} processes"
 				echo "Info! Press ctrl + c to abort !"
@@ -453,7 +463,15 @@ echo "Allowing ${tuprocess} to run on boot"
 update-rc.d "${tuprocess}" defaults
 }
 
+fn_start_back(){
+	if [  "${deftransmissionstopped}" == "1" ]; then
+		echo "Starting back ${deftransmission}"
+		"${tdefprocesspath}" start
+	fi
+}
+
 fn_setup_complete(){
+	echo ""
 	echo "Transmission server Deployment"
 	echo "########################################################"
 	echo "Installation complete!"
@@ -470,6 +488,7 @@ fn_setup_complete(){
 }
 
 fn_clean_complete(){
+	echo ""
 	echo "Transmission server cleaning"
 	echo "########################################################"
 	echo "Cleaning complete!"
