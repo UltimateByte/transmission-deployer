@@ -177,7 +177,7 @@ else
 	exit 1
 fi
 
-echo "\{
+echo "{
     \"alt-speed-down\": 50,
     \"alt-speed-enabled\": false,
     \"alt-speed-time-begin\": 540,
@@ -247,7 +247,7 @@ echo "\{
     \"upload-limit-enabled\": 0,
     \"upload-slots-per-torrent\": 20,
     \"utp-enabled\": true
-\}" > "${tuconfig}"
+}" > "${tuconfig}"
 
 echo "Symlinking config file"
 ln -vsf "${tuconfig}" "${utlibconfig}"
