@@ -95,10 +95,10 @@ else
 fi
 
 echo "Creating user's directories"
-if [ -d "${downloadsdir}" ]; then
+if [ ! -d "${downloadsdir}" ]; then
 	mkdir -pv "${downloadsdir}"
 fi
-if [ -d "${incompletedir}" ]; then
+if [ ! -d "${incompletedir}" ]; then
 	mkdir -pv "${incompletedir}"
 fi
 echo "Applying permissions"
