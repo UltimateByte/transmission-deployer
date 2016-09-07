@@ -81,7 +81,7 @@ Duplicating transmission-daemon to transmission-daemon-downloader...
 [ ok ] transmission-daemon-downloader duplicated
 
 Info! Please, set the transmission RPC password
-Warning! No confirmation & won't be given back
+Warning! No confirmation, not hidden
 RPC password:
 ILoveUltimateByte
 Please, set an RPC port (default 9091)
