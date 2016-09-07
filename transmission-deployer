@@ -143,7 +143,7 @@ fn_check(){
 	else
 		echo "[ERROR] ${deftransmission} doesn't seem to be installed"
 		echo "Please, install ${deftransmission} and re-run ./${selfname} ${command} ${username}"
-		exit 1
+		fn_sorry_exit
 	fi
 	# Checking required files and directories
 	# Homedir
@@ -152,42 +152,42 @@ fn_check(){
 	else
 		echo "[ERROR] Could not find folder ${homedir}"
 		echo "Please, set a valid homedir value"
-		sleep 2
+		fn_sorry_exit
 	fi
 	# Main program : /usr/bin/transmission-daemon
 	if [ -f "${bindir}/${deftransmission}" ]; then
 		echo "[ ok ] File ${bindir}/${deftransmission} found"
 	else
 		echo "[ERROR] could not find file ${bindir}/${deftransmission}"
-		exit 1
+		fn_sorry_exit
 	fi
 	# File /etc/init.d/transmission-daemon
 	if [ -f "${initdir}/${deftransmission}" ]; then
 		echo "[ ok ] File ${initdir}/${deftransmission} found"
 	else
 		echo "[ERROR] could not find file  ${initdir}/${deftransmission}"
-		exit 1
+		fn_sorry_exit
 	fi
 	# File /etc//default/transmission-daemon
 	if [ -f "${defdir}/${deftransmission}" ]; then
 		echo "[ ok ] File ${defdir}/${deftransmission} found"
 	else
 		echo "[ERROR] could not find file ${defdir}/${deftransmission}"
-		exit 1
+		fn_sorry_exit
 	fi
 	# Folder /var/lib/transmission-daemon
 	if [ -d "${libdir}/${deftransmission}" ]; then
 		echo "[ ok ] Folder ${libdir}/${deftransmission} found"
 	else
 		echo "[ERROR] could not find folder ${libdir}/${deftransmission}"
-		exit 1
+		fn_sorry_exit
 	fi
 	# Folder /etc/transmission-daemon
 	if [ -d "${etcdir}/${deftransmission}" ]; then
 		echo "[ ok ] Folder ${etcdir}/${deftransmission} found"
 	else
 		echo "[ERROR] could not find folder ${etcdir}/${deftransmission}"
-		exit 1
+		fn_sorry_exit
 	fi
 }
 
@@ -438,11 +438,11 @@ fn_create_config(){
 	ln -vsf "${tuconfig}" "${utlibconfig}"
 }
 
+fn_config_extra(){
 echo "Adjusting ${initdir}/${tuprocess} to fit user"
 # Process name
 sed -i "s/NAME=${deftransmission}/NAME=${tuprocess}/g" "${initdir}/${tuprocess}"
-# Username
-# Found out it prevents transmission from starting
+# Username # Found out it prevents transmission from starting
 #sed -i 's/USER='"${tservice}"'/USER='"${username}"'/g' "${initdir}/${tuprocess}"
 # Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
 sed -i 's/CONFIG_DIR="'"${tdefcfgdir}"'"/CONFIG_DIR="'"${ucfgdir}"'"/g' "${udefdir}"
@@ -450,17 +450,47 @@ sed -i 's/CONFIG_DIR="'"${tdefcfgdir}"'"/CONFIG_DIR="'"${ucfgdir}"'"/g' "${udefd
 # Process upon system boot
 echo "Allowing ${tuprocess} to run on boot"
 update-rc.d "${tuprocess}" defaults
+}
 
-echo "Transmission server Deployment"
-echo "########################################################"
-echo "Installation complete!"
-echo "You can now try to run the daemon with:"
-echo ".${initdir}/${tuprocess} start"
-echo ""
-echo "Info:"
-echo "Username: ${username}"
-echo "RPC Port: ${trpcport}"
-echo "RPC Password: ${rpcpasswd}"
-echo "RPC URL: /transmission"
-echo ""
-echo "Credits: UltimateByte"
+fn_setup_complete(){
+	echo "Transmission server Deployment"
+	echo "########################################################"
+	echo "Installation complete!"
+	echo "You can now try to run the daemon with:"
+	echo ".${initdir}/${tuprocess} start"
+	echo ""
+	echo "Info:"
+	echo "Username: ${username}"
+	echo "RPC Port: ${trpcport}"
+	echo "RPC Password: ${rpcpasswd}"
+	echo "RPC URL: /transmission"
+	echo ""
+	echo "Credits: UltimateByte"
+}
+
+fn_clean_complete(){
+	echo "Transmission server cleaning"
+	echo "########################################################"
+	echo "Cleaning complete!"
+	echo ""
+	echo "Credits: UltimateByte"
+}
+
+fn_check_root
+fn_check
+fn_welcome
+fn_prompt_continue_y
+fn_stop_transmission
+if [ "${command}" == "deploy" ]; then
+	fn_check_previously_installed
+	fn_check_user_exists
+	fn_create_user
+	fn_user_dirs
+	fn_transmission_duplicate
+	fn_create_config
+elif [ "${command}" == "clean" ]; then
+	fn_check_previously_installed
+	fn_check_user_exists
+	fn_remove_user
+	fn_clean_complete
+fi
