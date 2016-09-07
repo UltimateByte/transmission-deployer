@@ -17,7 +17,18 @@ homedir="/home"
 
 # Misc Variables
 selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+tprocess="debian-transmission"
+deftransmission="transmission-daemon"
 
+# Stopping transmission
+if [ -f /etc/init.d/transmission-daemon ]; then
+	echo "Stopping transmission-daemon"
+	/etc/init.d/"${deftransmission}" stop
+else
+	echo "Please, install transmission-daemon before running ${selfname}"
+	exit 1
+fi
+	
 # Prompt
 echo "Enter a username"
 echo "This username will also be used for transmission-daemon servicename"
@@ -27,6 +38,8 @@ read -r username
 userdir="${homedir}/${username}"
 downloadsdir="${userdir}/downloads"
 incompletedir="${userdir}/incomplete"
+uprocess="transmission-daemon-${username}"
+tconfig="/etc/${uprocess}/settings.json"
 
 echo "Create new transmission server for ${username} ?"
 echo "Home direcotry for this user set to ${userdir}"
@@ -50,7 +63,96 @@ else
   useradd -m -d "${userdir}" "${username}"
   echo "User created"
   echo "Please, chose a password for ${username}"
-  passwd ${username}
+  passwd "${username}"
 fi
 
 echo "Creating user's directories"
+if [ -d "${donwloadsdir}" ]; then
+	mkdir -pv "${downloadsdir}"
+fi
+if [ -d "${incompletedir}" ]; then
+	mkdir -pv "${incompletedir}"
+fi
+
+chown "${username}":"${username}" "${userdir}"
+chown -R "${username}":"${tprocess}" "${userdir}/*"
+chmod -R 770 ${userdir}/*
+
+
+
+echo "Please, set transmission password"
+read -s tpasswd
+echo "Please, set an RPC port (default 9091)"
+read -r rpcport
+
+echo "{
+    \"alt-speed-down": 50,
+    \"alt-speed-enabled\": false,
+    \"alt-speed-time-begin\": 540,
+    \"alt-speed-time-day\": 127,
+    \"alt-speed-time-enabled\": false,
+    \"alt-speed-time-end\": 1020,
+    \"alt-speed-up\": 50,
+    \"bind-address-ipv4\": "0.0.0.0",
+    \"bind-address-ipv6\": "::",
+    \"blocklist-enabled\": false,
+    \"blocklist-url\": "http://www.example.com/blocklist",
+    \"cache-size-mb\": 4,
+    \"dht-enabled\": true,
+    \"download-dir\": \""${downloadsdir}"\",
+    \"download-limit\": 100,
+    \"download-limit-enabled\": 0,
+    \"download-queue-enabled\": true,
+    \"download-queue-size\": 5,
+    \"encryption\": 1,
+    \"idle-seeding-limit\": 30,
+    \"idle-seeding-limit-enabled\": false,
+    \"incomplete-dir\": \""${inconpletedir}"\",
+    \"incomplete-dir-enabled\": true,
+    \"lpd-enabled\": false,
+    \"max-peers-global\": 200,
+    \"message-level\": 1,
+    \"peer-congestion-algorithm\": \"\",
+    \"peer-id-ttl-hours\": 6,
+    \"peer-limit-global\": 200,
+    \"peer-limit-per-torrent\": 50,
+    \"peer-port\": 51413,
+    \"peer-port-random-high\": 65535,
+    \"peer-port-random-low\": 49152,
+    \"peer-port-random-on-start\": false,
+    \"peer-socket-tos\": \"default\",
+    \"pex-enabled\": true,
+    \"port-forwarding-enabled\": false,
+    \"preallocation\": 1,
+    \"prefetch-enabled\": 1,
+    \"queue-stalled-enabled\": true,
+    \"queue-stalled-minutes\": 30,
+    \"ratio-limit\": 2,
+    \"ratio-limit-enabled\": false,
+    \"rename-partial-files\": true,
+    \"rpc-authentication-required\": true,
+    \"rpc-bind-address\": \"0.0.0.0\",
+    \"rpc-enabled\": true,
+    \"rpc-password\": \""${tpasswd}"\",
+    \"rpc-port\": "${trpcport}",
+    \"rpc-url\": "/transmission/",
+    \"rpc-username\": \""${username}"\",
+    \"rpc-whitelist\": "127.0.0.1",
+    \"rpc-whitelist-enabled\": false,
+    \"scrape-paused-torrents-enabled\": true,
+    \"script-torrent-done-enabled\": false,
+    \"script-torrent-done-filename\": \"\",
+    \"seed-queue-enabled\": false,
+    \"seed-queue-size\": 10,
+    \"speed-limit-down\": 12000,
+    \"speed-limit-down-enabled\": false,
+    \"speed-limit-up\": 500,
+    \"speed-limit-up-enabled\": true,
+    \"start-added-torrents\": true,
+    \"trash-original-torrent-files\": false,
+    \"umask\": 7,
+    \"upload-limit\": 100,
+    \"upload-limit-enabled\": 0,
+    \"upload-slots-per-torrent\": 20,
+    \"utp-enabled\": true
+}" >> "${tconfig}"
