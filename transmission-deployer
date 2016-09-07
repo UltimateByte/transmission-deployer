@@ -449,12 +449,13 @@ fn_create_config(){
 
 fn_config_extra(){
 echo "Adjusting ${initdir}/${tuprocess} to fit user"
-# Process name
+# Process name to user process name
 sed -i "s/NAME=${deftransmission}/NAME=${tuprocess}/g" "${initdir}/${tuprocess}"
-# Username # Found out it prevents transmission from starting
-#sed -i 's/USER='"${tservice}"'/USER='"${username}"'/g' "${initdir}/${tuprocess}"
+# Process "provides" to user process name 
+sed -i "s/${deftransmission}/${tuprocess}/g" "${initdir}/${tuprocess}"
 # Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
 sed -i "s@${tdefcfgdir}@${ucfgdir}@g" "${udefdir}"
+
 
 # Process upon system boot
 echo "Allowing ${tuprocess} to run on boot"
