@@ -47,6 +47,9 @@ Example
 * Add quota management
 * Be more versatile if user changed default transmission-daemon
 * Add a check to know if default transmission-daemon is started or not (for now it will always close it before the process then restart it after the process)
+* Safer user based process
+* Default install to /home/seedboxes with folder cration prompt
+* Check /path/to/userdir permissions
 
 # Sample output
 
