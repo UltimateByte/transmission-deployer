@@ -37,6 +37,8 @@ etcdir="/etc"
 defdir="${etcdir}/default"
 # Default transmission process full path
 tdefprocess="${initdir}/${deftransmission}"
+# Default transmission configdir
+tdefcfgdir="${libdir}/${deftransmission}/info"
 
 # User config
 # User home directory
@@ -51,6 +53,10 @@ tuprocess="${deftransmission}-${username}"
 tuconfig="${etcdir}/${tuprocess}/${cfgfile}"
 # User default config file
 utlibconfig="${libdir}/${tuprocess}/info/${cfgfile}"
+# User defdir
+udefdir="${defdir}/${tuprocess}"
+# User transmission configdir
+ucfgdir="${libdir}/${tuprocess}/info"
 
 
 # Stopping transmission
@@ -68,7 +74,7 @@ echo "Home direcotry for this user set to dir: ${userdir}"
 
 # Prompt
 while true; do
-	read -e -i "y" -p "Continue? [Y/n]" yn
+	read -r -e -i "y" -p "Continue? [Y/n]" yn
 	case $yn in
 	[Yy]* ) echo "Let's go!"; sleep 1; break;;
 	[Nn]* ) echo "Maybe next time!"; exit 0;;
@@ -77,15 +83,15 @@ esac
 done
 
 if [ "$(grep "${username}" /etc/passwd)" ]; then
-	userexists="1"
+	echo "User already exists, not creating it"
 else
-  userexists="0"
+	
 	# Adding user
 	echo "Creating ${username}"
-  useradd -m -d "${userdir}" "${username}"
-  echo "User created"
-  echo "Please, chose a password for ${username}"
-  passwd "${username}"
+	useradd -m -d "${userdir}" "${username}"
+	echo "User created"
+	echo "Please, chose a password for ${username}"
+	passwd "${username}"
 fi
 
 echo "Creating user's directories"
@@ -97,27 +103,14 @@ if [ -d "${incompletedir}" ]; then
 fi
 echo "Applying permissions"
 chown "${username}":"${username}" "${userdir}"
-chown -R "${username}":"${tservice}" "${userdir}/*"
-chmod -R 770 "${userdir}/*"
+chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
+chmod -R 770 "${downloadsdir}" "${incompletedir}"
+# Don't add user to group for now, might fix permissions by editting init.d/transmission-daemon-username
+# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
+#echo "Adding user ${username} to group ${tservice}"
+#echo "Note: Will fix permission issues but allow this user to access other files from the group"
+#usermod -a -G "${tservice}" "${username}"
 
-### Dev notes
-## Useful folders
-# cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2 
-# cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2 
-# cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2 
-# cp -a /etc/transmission-daemon /etc/transmission-daemon2 
-# cp /etc/default/transmission-daemon /etc/default/transmission-daemon2 
-# chmod –R 777 /usr/bin/transmission-daemon2 
-# chmod –R 777 /etc/init.d/transmission-daemon2 
-# chmod –R 777 /var/lib/transmission-daemon2 
-# chmod –R 777 /etc/transmission-daemon2
-# chmod –R 777 /etc/default/transmission-daemon2
-
-
-echo "Please, set transmission password"
-read -s tpasswd
-echo "Please, set an RPC port (default 9091)"
-read -r trpcport
 
 ### Dev notes
 ## Useful stuff as per https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
@@ -131,6 +124,12 @@ read -r trpcport
 # chmod –R 777 /var/lib/transmission-daemon2 
 # chmod –R 777 /etc/transmission-daemon2
 # chmod –R 777 /etc/default/transmission-daemon2
+
+echo "Please, set transmission RPC password"
+echo "Warning! No confirmation & won't be given back"
+read -rs tpasswd
+echo "Please, set an RPC port (default 9091)"
+read -r trpcport
 
 if [ -d "${bindir}/${tservice}" ]; then
 	cp -v "${bindir}/${tservice}" "${bindir}/${tuprocess}"
@@ -212,7 +211,7 @@ echo "\{
     \"peer-port\": 51413,
     \"peer-port-random-high\": 65535,
     \"peer-port-random-low\": 49152,
-    \"peer-port-random-on-start\": false,
+    \"peer-port-random-on-start\": true,
     \"peer-socket-tos\": \"default\",
     \"pex-enabled\": true,
     \"port-forwarding-enabled\": false,
@@ -252,3 +251,23 @@ echo "\{
 
 echo "Symlinking config file"
 ln -vsf "${tuconfig}" "${utlibconfig}"
+
+echo "Adjusting ${initdir}/${tuprocess} to fit user"
+# Process name
+sed -i "s/NAME=${deftransmission}/NAME=${tuprocess}/g" "${initdir}/${tuprocess}"
+# Username
+sed -i "s/USER=${tservice}/USER=${username}/g" "${initdir}/${tuprocess}"
+sed -i "s/CONFIG_DIR=\"${tdefcfgdir}\"/CONFIG_DIR=\"${ucfgdir}\"/g" "${udefdir}"
+
+# Process upon system boot
+echo "Allowing ${tuprocess} to run on boot"
+update-rc.d ${tuprocess} defaults
+
+echo "All done"
+echo "You can now try to run the daemon with:"
+echo "./${initdir}/${tuprocess} start"
+echo "Info:"
+echo "Username: username"
+echo "RPC Port: {trpcport}"
+echo "Passwords: You set them."
+echo "RPC URL: /transmission"
