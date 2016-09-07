@@ -41,8 +41,8 @@ incompletedir="${userdir}/incomplete"
 uprocess="transmission-daemon-${username}"
 tconfig="/etc/${uprocess}/settings.json"
 
-echo "Create new transmission server for ${username} ?"
-echo "Home direcotry for this user set to ${userdir}"
+echo "Create new transmission server for user: ${username} ?"
+echo "Home direcotry for this user set to dir: ${userdir}"
 
 # Prompt
 while true; do
@@ -67,7 +67,7 @@ else
 fi
 
 echo "Creating user's directories"
-if [ -d "${donwloadsdir}" ]; then
+if [ -d "${downloadsdir}" ]; then
 	mkdir -pv "${downloadsdir}"
 fi
 if [ -d "${incompletedir}" ]; then
@@ -76,30 +76,30 @@ fi
 
 chown "${username}":"${username}" "${userdir}"
 chown -R "${username}":"${tprocess}" "${userdir}/*"
-chmod -R 770 ${userdir}/*
+chmod -R 770 "${userdir}/*"
 
 
 
 echo "Please, set transmission password"
 read -s tpasswd
 echo "Please, set an RPC port (default 9091)"
-read -r rpcport
+read -r trpcport
 
-echo "{
-    \"alt-speed-down": 50,
+echo "\{
+    \"alt-speed-down\": 50,
     \"alt-speed-enabled\": false,
     \"alt-speed-time-begin\": 540,
     \"alt-speed-time-day\": 127,
     \"alt-speed-time-enabled\": false,
     \"alt-speed-time-end\": 1020,
     \"alt-speed-up\": 50,
-    \"bind-address-ipv4\": "0.0.0.0",
-    \"bind-address-ipv6\": "::",
+    \"bind-address-ipv4\": \"0.0.0.0\",
+    \"bind-address-ipv6\": \"::\",
     \"blocklist-enabled\": false,
-    \"blocklist-url\": "http://www.example.com/blocklist",
+    \"blocklist-url\": \"http://www.example.com/blocklist\",
     \"cache-size-mb\": 4,
     \"dht-enabled\": true,
-    \"download-dir\": \""${downloadsdir}"\",
+    \"download-dir\": \"${downloadsdir}\",
     \"download-limit\": 100,
     \"download-limit-enabled\": 0,
     \"download-queue-enabled\": true,
@@ -107,7 +107,7 @@ echo "{
     \"encryption\": 1,
     \"idle-seeding-limit\": 30,
     \"idle-seeding-limit-enabled\": false,
-    \"incomplete-dir\": \""${inconpletedir}"\",
+    \"incomplete-dir\": \"${incompletedir}\",
     \"incomplete-dir-enabled\": true,
     \"lpd-enabled\": false,
     \"max-peers-global\": 200,
@@ -133,11 +133,11 @@ echo "{
     \"rpc-authentication-required\": true,
     \"rpc-bind-address\": \"0.0.0.0\",
     \"rpc-enabled\": true,
-    \"rpc-password\": \""${tpasswd}"\",
-    \"rpc-port\": "${trpcport}",
-    \"rpc-url\": "/transmission/",
-    \"rpc-username\": \""${username}"\",
-    \"rpc-whitelist\": "127.0.0.1",
+    \"rpc-password\": \"${tpasswd}\",
+    \"rpc-port\": ${trpcport},
+    \"rpc-url\": \"/transmission/\",
+    \"rpc-username\": \"${username}\",
+    \"rpc-whitelist\": \"127.0.0.1\",
     \"rpc-whitelist-enabled\": false,
     \"scrape-paused-torrents-enabled\": true,
     \"script-torrent-done-enabled\": false,
@@ -155,4 +155,4 @@ echo "{
     \"upload-limit-enabled\": 0,
     \"upload-slots-per-torrent\": 20,
     \"utp-enabled\": true
-}" >> "${tconfig}"
+\}" >> "${tconfig}"
