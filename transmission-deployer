@@ -159,7 +159,7 @@ else
 	exit 1
 fi
 
-if [ -d "${defdir}/${deftransmission}" ]; then
+if [ -f "${defdir}/${deftransmission}" ]; then
 	cp -v "${defdir}/${deftransmission}" "${defdir}/${tuprocess}"
 else
 	echo "Fatal error, could not find ${defdir}/${deftransmission}"
