@@ -218,11 +218,12 @@ fn_check_previously_installed(){
 		done
 		if [ "${cleanoldtransmission}" == "yes" ]; then
 			echo "Removing ${tuprocess} files"
-			rm -R "${bindir}/${tuprocess}" "${initdir}/${tuprocess}" "${libdir}/${tuprocess}" "${etcdir}/${tuprocess}" "${defdir}/${tuprocess}"
+			rm -R "${bindir:?}/${tuprocess:?}" "${initdir:?}/${tuprocess:?}" "${libdir:?}/${tuprocess:?}" "${etcdir:?}/${tuprocess:?}" "${defdir:?}/${tuprocess:?}"
 			echo "Removing ${tuprocess} from rc.d"
 			update-rc.d "${tuprocess}" remove
 			echo "[ ok ] Previous installation cleaned."
 		fi
+	fi
 }
 
 # Check if user exists, returns userexists=0/1
@@ -263,7 +264,7 @@ fn_remove_user(){
 				sleep 1; echo "2"
 				sleep 1; echo "1"
 				sleep 1; echo "removing ${username}"
-				userdel -r ${username}
+				userdel -r "${username}"
 				echo "[ ok ] Removed previous ${username} and its home directory"
 			fi
 		fi
@@ -274,7 +275,7 @@ fn_create_user(){
 	if [ "${userexists}" == 1 ]; then
 		fn_remove_user
 	fi
-	if [ "${userexists}" == "0" ]||[ "${cleanuser}" == "1"]; then
+	if [ "${userexists}" == "0" ]||[ "${cleanuser}" == "1" ]; then
 		echo "Info! ${username} doesn't exist"
 		echo "Home direcotry for this user set to dir: ${userdir}"
 		echo "Create new transmission server for user: ${username} ?"
@@ -282,7 +283,7 @@ fn_create_user(){
 		# Adding user
 		echo "Creating ${username}"
 		useradd -m -d "${userdir}" "${username}"
-		echo "Default shell ${usershell}" for ${username}
+		echo "Default shell ${usershell} for ${username}"
 		usermod -s "${usershell}" "${username}"
 		# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
 		echo "Adding user ${username} to group ${tservice}..."
