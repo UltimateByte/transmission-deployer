@@ -10,19 +10,43 @@
 ### SETTINGS ##
 # The parent folder for your user's home directory (usually /home)
 homedir="/home"
+# Default shell defined with usermod -s (usually /bin/bash)
+usershell="/bin/bash"
 
 #############
 ## Program ##
 #############
 
-	
-# User Input
-echo "Enter a username"
-echo "This username will also be used for transmission-daemon servicename"
-read -r username
-
 ## Misc Variables ##
 selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+fn_usage(){
+	echo "Info! Please, specify a command and a username"
+	echo "Usage: ./${selfname} [command] [username]"
+	echo "Available commands: deploy"
+}
+
+# Check user input
+if [ -z "$1" ] || [ -z "$2" ]; then
+	fn_usage
+	exit 0
+elif [ -n "$3" ]; then
+	echo "[ERROR] Too many arguments!"
+	fn_usage
+	exit 1
+else
+	username="${2}"
+fi
+if [ "$1" == "deploy" ]; then
+	command="deploy"
+else 
+	echo "[ERROR] Invalid command!"
+	fn_usage
+	exit 1
+fi
+
+## Variables ###
+# MISC
 # Transmission service name
 tservice="debian-transmission"
 # Transmission package name
@@ -36,7 +60,7 @@ libdir="/var/lib"
 etcdir="/etc"
 defdir="${etcdir}/default"
 # Default transmission process full path
-tdefprocess="${initdir}/${deftransmission}"
+tdefprocesspath="${initdir}/${deftransmission}"
 # Default transmission configdir
 tdefcfgdir="${libdir}/${deftransmission}/info"
 
@@ -57,20 +81,151 @@ utlibconfig="${libdir}/${tuprocess}/info/${cfgfile}"
 udefdir="${defdir}/${tuprocess}"
 # User transmission configdir
 ucfgdir="${libdir}/${tuprocess}/info"
+# User transmission program
+tuprocesspath="${initdir}/${tuprocess}"
 
+# Welcome
+echo "Transmission server Deployment"
+echo "########################################################"
+echo "Welcome!"
+echo ""
+echo "You chosed to ${command} transmission-daemon for ${username}"
+sleep 2
+echo ""
 
-# Stopping transmission
-if [ -f "${tdefprocess}" ]; then
-	echo "Stopping ${deftransmission}"
-	"${tdefprocess}" stop
-else
-	echo "Please, install ${deftransmission} before running ${selfname}"
-	exit 1
+fn_prompt_continue_y(){
+	while true; do
+		read -e -i "y" -p "Continue? [Y/n]" yn
+		case $yn in
+		[Yy]* ) echo "Let's go!"; sleep 1; break;;
+		[Nn]* ) echo "Aborting!"; exit 0;;
+		* ) echo "Please answer yes or no.";;
+	esac
+	done
+}
+
+# Checks that everything is allright before starting
+fn_check(){
+	echo ""
+	echo "Checking your configuration..."
+	sleep 1
+	echo ""
+	# Checking if transmission-daemon is installed
+	if [ -f "${tdefprocesspath}" ]; then
+		echo "[ ok ] transmission-daemon installed"
+	else
+		echo "[ERROR] ${deftransmission} doesn't seem to be installed"
+		echo "Please, install ${deftransmission} and re-run ./${selfname} ${command} ${username}"
+		exit 1
+	fi
+	# Checking required files and directories
+	# Main program : /usr/bin/transmission-daemon
+	if [ -f "${bindir}/${deftransmission}" ]; then
+		echo "[ ok ] File ${bindir}/${deftransmission} found"
+	else
+		echo "[ERROR] could not find file ${bindir}/${deftransmission}"
+		exit 1
+	fi
+	# File /etc/init.d/transmission-daemon
+	if [ -f "${initdir}/${deftransmission}" ]; then
+		echo "[ ok ] File ${initdir}/${deftransmission} found"
+	else
+		echo "[ERROR] could not find file  ${initdir}/${deftransmission}"
+		exit 1
+	fi
+	# File /etc//default/transmission-daemon
+	if [ -f "${defdir}/${deftransmission}" ]; then
+		echo "[ ok ] File ${defdir}/${deftransmission} found"
+	else
+		echo "[ERROR] could not find file ${defdir}/${deftransmission}"
+		exit 1
+	fi
+	# Folder /var/lib/transmission-daemon
+	if [ -d "${libdir}/${deftransmission}" ]; then
+		echo "[ ok ] Folder ${libdir}/${deftransmission} found"
+	else
+		echo "[ERROR] could not find folder ${libdir}/${deftransmission}"
+		exit 1
+	fi
+	# Folder /etc/transmission-daemon
+	if [ -d "${etcdir}/${deftransmission}" ]; then
+		echo "[ ok ] Folder ${etcdir}/${deftransmission} found"
+	else
+		echo "[ERROR] could not find folder ${etcdir}/${deftransmission}"
+		exit 1
+	fi
+}
+
+fn_stop_transmission(){
+	# Stopping transmission
+	if [ -f "${tdefprocesspath}" ]; then
+		echo "Stopping ${deftransmission} in order to continue the process"
+		"${tdefprocesspath}" stop
+	fi
+	if [ -f "${tuprocesspath}" ]; then
+		echo "Stopping ${tuprocess} in order to continue the process"
+		"${tuprocesspath}" stop
+	fi
+}
+
+fn_check_previously_installed(){
+	if [ -f "${tuprocesspath}" ]; then
+		echo "[WARNING] ${tuprocess} is already installed!"
+		echo "Do you wish to autoclean the old transmission from ${username} ?"
+		echo "Info! This will remove any torrent and transmission settings."
+		while true; do
+			read -e -p "Continue? [y/n]" yn
+			case $yn in
+				[Yy]* ) echo "Cleaning!"; cleanoldtransmission="yes"; break;;
+				[Nn]* ) echo "Aborting!"; cleanoldtransmission="no", break;;
+			* ) echo "Please answer yes or no.";;
+			esac
+		done
+		if [ "${cleanoldtransmission}" == "yes" ]; then
+			echo "Removing ${tuprocess} files"
+			rm -R "${bindir}/${tuprocess}" "${initdir}/${tuprocess}" "${libdir}/${tuprocess}" "${etcdir}/${tuprocess}" "${defdir}/${tuprocess}"
+			echo "Removing ${tuprocess} from rc.d"
+			update-rc.d "${tuprocess}" remove
+			echo "[ ok ] Previous installation cleaned."
+		fi
+}
+
+fn_create_user(){
+	if [ "$(grep "${username}" /etc/passwd)" ]; then
+		echo "Info! ${username} exists"
+		userexists=1
+		if [ -d "${userdir}" ]; then
+			echo "Do you wish to remove the user and its home directory ?"
+			"[WARNING] Any file in ${userdir} will be lost!"
+			while true; do
+				read -e -p "Continue? [y/n]" yn
+				case $yn in
+					[Yy]* ) echo "Let's go!"; cleanuser="yes"; break;;
+					[Nn]* ) echo "Aborting!"; cleanuser="no", break;;
+				* ) echo "Please answer yes or no.";;
+				esac
+			done
+			if [ "${cleanuser}" == "yes" ]; then
+				
+			
+	else
+		echo "Info! ${username} doesn't exist"
+		echo "Home direcotry for this user set to dir: ${userdir}"
+		echo "Create new transmission server for user: ${username} ?"
+		fn_prompt_continue_y
+		# Adding user
+		echo "Creating ${username}"
+		useradd -m -d "${userdir}" "${username}"
+		usermod -s "${usershell}" "${username}"
+		echo "[ ok ] User created"
+		echo "Please, choose a password for ${username}:"
+		passwd "${username}"
 fi
+}
 
 
-echo "Create new transmission server for user: ${username} ?"
-echo "Home direcotry for this user set to dir: ${userdir}"
+
+
 
 # Prompt
 while true; do
@@ -256,7 +411,8 @@ echo "Adjusting ${initdir}/${tuprocess} to fit user"
 # Process name
 sed -i "s/NAME=${deftransmission}/NAME=${tuprocess}/g" "${initdir}/${tuprocess}"
 # Username
-sed -i 's/USER='"${tservice}"'/USER='"${username}"'/g' "${initdir}/${tuprocess}"
+# Found out it prevents transmission from starting
+#sed -i 's/USER='"${tservice}"'/USER='"${username}"'/g' "${initdir}/${tuprocess}"
 # Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
 sed -i 's/CONFIG_DIR="'"${tdefcfgdir}"'"/CONFIG_DIR="'"${ucfgdir}"'"/g' "${udefdir}"
 
