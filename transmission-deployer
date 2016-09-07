@@ -223,11 +223,18 @@ fn_check_previously_installed(){
 		done
 		echo ""
 		if [ "${cleanoldtransmission}" == "yes" ]; then
-			echo "Removing ${tuprocess} files"
+			echo "Removing user ${username} from group ${tservice}..."
+			deluser ${username} ${tservice}
+			echo "[ ok ] User is not a part of ${tservice} anymore!"
+			echo ""
+			echo "Removing ${tuprocess} files..."
 			rm -R "${bindir:?}/${tuprocess:?}" "${initdir:?}/${tuprocess:?}" "${libdir:?}/${tuprocess:?}" "${etcdir:?}/${tuprocess:?}" "${defdir:?}/${tuprocess:?}"
-			echo "Removing ${tuprocess} from rc.d"
+			echo "[ ok ] files removed!"
+			echo "Removing ${tuprocess} from rc.d..."
 			update-rc.d "${tuprocess}" remove
-			echo "[ ok ] Previous installation cleaned."
+			echo "[ ok ] Process cleared from rc.d!"
+			echo ""
+			echo "[ ok ] Previous installation cleaned!"
 			echo ""
 		fi
 	fi
@@ -264,6 +271,7 @@ fn_remove_user(){
 				sleep 2
 				killall -KILL -u "${username}"
 				echo "[ ok ] Closed processes"
+				echo ""
 				echo "Removing user: ${username} and its home: ${userdir}"
 				echo "Info! Press ctrl + c to abort !"
 				sleep 1; echo "5"
@@ -313,7 +321,10 @@ fn_user_dirs(){
 	if [ ! -d "${incompletedir}" ]; then
 		mkdir -p "${incompletedir}"
 	fi
+	echo "[ ok ] Directories created!"
+	echo ""
 	echo "Applying permissions..."
+	echo "[ ok ] Proper permissions applied!"
 	sleep 1
 	chown "${username}":"${username}" "${userdir}"
 	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
@@ -346,14 +357,14 @@ fn_transmission_duplicate(){
 		echo "[ERROR] ${etcdir}/${tuprocess} was not created"
 		fn_sorry_exit
 	fi
-	echo "[ ok ] ${tuprocess} duplicated"
+	echo "[ ok ] ${tuprocess} duplicated!"
 }
 
 # Generate config file
 fn_create_config(){
 	echo ""
 	echo "Info! Please, set the transmission RPC password"
-	echo "Warning! No confirmation & won't be given back"
+	echo "Warning! No confirmation, not hidden"
 	echo "RPC password:"
 	read -r rpcpasswd
 	echo "Please, set an RPC port (default 9091)"
