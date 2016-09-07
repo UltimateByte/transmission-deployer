@@ -5,7 +5,7 @@ Tested on Debian 8.5, should also work with Ubuntu.
 ### Requirements
 * Have a Debian based distro
 * Have transmission-daemon installed 
-* Have the default transmission-daemon empty
+* Have the default transmission-daemon unchanged and unused
  
 ### What it does
 * Checks your current installation
