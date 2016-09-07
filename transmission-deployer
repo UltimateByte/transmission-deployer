@@ -21,31 +21,41 @@ echo "Enter a username"
 echo "This username will also be used for transmission-daemon servicename"
 read -r username
 
-# Misc Variables
+## Misc Variables ##
 selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
-tprocess="debian-transmission"
+# Transmission service name
+tservice="debian-transmission"
+# Transmission package name
 deftransmission="transmission-daemon"
+# Config file
 cfgfile="settings.json"
+# System directories
 bindir="/usr/bin"
 initdir="/etc/init.d"
 libdir="/var/lib"
 etcdir="/etc"
+defdir="${etcdir}/default"
+# Default transmission process full path
+tdefprocess="${initdir}/${deftransmission}"
 
 # User config
+# User home directory
 userdir="${homedir}/${username}"
+# User download directory
 downloadsdir="${userdir}/downloads"
+# User incomplete directory
 incompletedir="${userdir}/incomplete"
+# User's transmission process name
 tuprocess="${deftransmission}-${username}"
-tconfig="${etcdir}/${tuprocess}/settings.json"
-
-
-defdir="${etcdir}/default"
+# User config file full patch
+tuconfig="${etcdir}/${tuprocess}/${cfgfile}"
+# User default config file
 utlibconfig="${libdir}/${tuprocess}/info/${cfgfile}"
-tdefprocess="${initdir}/${deftransmission}"
+
 
 # Stopping transmission
 if [ -f "${tdefprocess}" ]; then
-	echo "Stopping transmission-daemon"
+	echo "Stopping ${deftransmission}"
 	"${tdefprocess}" stop
 else
 	echo "Please, install ${deftransmission} before running ${selfname}"
@@ -87,7 +97,7 @@ if [ -d "${incompletedir}" ]; then
 fi
 echo "Applying permissions"
 chown "${username}":"${username}" "${userdir}"
-chown -R "${username}":"${tprocess}" "${userdir}/*"
+chown -R "${username}":"${tservice}" "${userdir}/*"
 chmod -R 770 "${userdir}/*"
 
 ### Dev notes
@@ -122,46 +132,46 @@ read -r trpcport
 # chmod –R 777 /etc/transmission-daemon2
 # chmod –R 777 /etc/default/transmission-daemon2
 
-if [ -d "${bindir}/${tprocess}" ]; then
-	cp -v "${bindir}/${tprocess}" "${bindir}/${tuprocess}"
+if [ -d "${bindir}/${tservice}" ]; then
+	cp -v "${bindir}/${tservice}" "${bindir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${bindir}/${tprocess}"
+	echo "Fatal error, could not find ${bindir}/${tservice}"
 	exit 1
 fi
 
-if [ -d "${initdir}/${tprocess}" ]; then
-	cp -v "${initdir}/${tprocess}" "${initdir}/${tuprocess}"
+if [ -d "${initdir}/${tservice}" ]; then
+	cp -v "${initdir}/${tservice}" "${initdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${initdir}/${tprocess}"
+	echo "Fatal error, could not find ${initdir}/${tservice}"
 	exit 1
 fi
 
-if [ -d "${libdir}/${tprocess}" ]; then
-	cp -av "${libdir}/${tprocess}" "${libdir}/${tuprocess}"
+if [ -d "${libdir}/${tservice}" ]; then
+	cp -av "${libdir}/${tservice}" "${libdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${libdir}/${tprocess}"
+	echo "Fatal error, could not find ${libdir}/${tservice}"
 	exit 1
 fi
 
-if [ -d "${etcdir}/${tprocess}" ]; then
-	cp -av "${etcdir}/${tprocess}" "${etcdir}/${tuprocess}"
+if [ -d "${etcdir}/${tservice}" ]; then
+	cp -av "${etcdir}/${tservice}" "${etcdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${etcdir}/${tprocess}"
+	echo "Fatal error, could not find ${etcdir}/${tservice}"
 	exit 1
 fi
 
-if [ -d "${defdir}/${tprocess}" ]; then
-	cp -v "${defdir}/${tprocess}" "${defdir}/${tuprocess}"
+if [ -d "${defdir}/${tservice}" ]; then
+	cp -v "${defdir}/${tservice}" "${defdir}/${tuprocess}"
 else
-	echo "Fatal error, could not find ${defdir}/${tprocess}"
+	echo "Fatal error, could not find ${defdir}/${tservice}"
 	exit 1
 fi
 
 if [ -d "${etcdir}/${tuprocess}" ]; then
-	if [ ! -f "${tconfig}" ]; then
+	if [ ! -f "${tuconfig}" ]; then
 		echo "Warning! No config file was found in ${etcdir}/${tuprocess}"
 		echo "Creating config file"
-		touch "${tconfig}"
+		touch "${tuconfig}"
 	fi
 else
 	echo "Fatal error, ${etcdir}/${tuprocess} was not successfully created"
@@ -238,7 +248,7 @@ echo "\{
     \"upload-limit-enabled\": 0,
     \"upload-slots-per-torrent\": 20,
     \"utp-enabled\": true
-\}" > "${tconfig}"
+\}" > "${tuconfig}"
 
 echo "Symlinking config file"
-ln -vsf "${tconfig}" "${utlibconfig}"
+ln -vsf "${tuconfig}" "${utlibconfig}"
