@@ -53,6 +53,7 @@ Example
 * Check users used space
 * Display config from a user
 * Display stats about all users
+* Create and manage .htaccess
 * Update transmission server
 * Add quota management
 
