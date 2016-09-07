@@ -53,7 +53,8 @@ Example
 * Check users used space
 * Display config from a user
 * Display stats about all users
-* Create and manage .htaccess
+* Create and manage .htaccess for userdir
+* Add apaxy file browser for userdir
 * Update transmission server
 * Add quota management
 
