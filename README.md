@@ -72,7 +72,7 @@ Welcome!
 Please, take a moment to review your settings.
 You're using this script as root. Be extra careful.
 
-You choose to deploy transmission-daemon for downloader
+You chose to deploy transmission-daemon for downloader
 
 Continue? [Y/n]y
 Let's go!
@@ -165,7 +165,7 @@ Welcome!
 Please, take a moment to review your settings.
 You're using this script as root. Be extra careful.
 
-You choose to clean transmission-daemon for downloader
+You chose to clean transmission-daemon for downloader
 
 Continue? [Y/n]y
 Let's go!
