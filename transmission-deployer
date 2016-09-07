@@ -336,9 +336,10 @@ fn_user_dirs(){
 	echo "Applying permissions..."
 	echo "[ ok ] Proper permissions applied!"
 	sleep 1
-	chown "${username}":"${username}" "${userdir}"
+	chown "${username}":"${tservice}" "${userdir}"
 	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
-	chmod -R 770 "${downloadsdir}" "${incompletedir}"
+	chmod 775 "${sbdirectories}"
+	chmod -R 770 "${userdir}
 }
 
 ### Dev notes
