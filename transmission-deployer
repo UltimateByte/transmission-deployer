@@ -120,17 +120,15 @@ ucfgdir="${libdir}/${tuprocess}/info"
 tuprocesspath="${initdir}/${tuprocess}"
 
 fn_prompt_continue_y(){
-	if [ "${command}" != "details" ]; then
-		while true; do
-			read -e -i "y" -p "Continue? [Y/n]" yn
-			case $yn in
-				[Yy]* ) echo "Let's go!"; sleep 1; break;;
-				[Nn]* ) echo "Aborting!"; exit 0;;
-			* ) echo "Please answer yes or no.";;
-			esac
-		done
-		echo ""
-	fi
+	while true; do
+		read -e -i "y" -p "Continue? [Y/n]" yn
+		case $yn in
+			[Yy]* ) echo "Let's go!"; sleep 1; break;;
+			[Nn]* ) echo "Aborting!"; exit 0;;
+		* ) echo "Please answer yes or no.";;
+		esac
+	done
+	echo ""
 }
 
 fn_sorry_exit(){
@@ -582,11 +580,11 @@ fn_details(){
 }
 
 fn_check_root
-fn_check
-fn_prompt_continue_y
 if [ "${command}" == "details" ]; then
 	fn_details
 elif [ "${command}" == "deploy" ]; then
+	fn_check
+	fn_prompt_continue_y
 	fn_welcome
 	fn_stop_transmission
 	fn_check_previously_installed
@@ -599,6 +597,8 @@ elif [ "${command}" == "deploy" ]; then
 	fn_start_back
 	fn_setup_complete
 elif [ "${command}" == "clean" ]; then
+	fn_check
+	fn_prompt_continue_y
 	fn_welcome
 	fn_stop_transmission
 	fn_check_previously_installed
