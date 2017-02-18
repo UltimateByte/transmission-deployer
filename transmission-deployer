@@ -549,7 +549,7 @@ fn_clean_complete(){
 
 fn_details_process(){
 	echo "########"
-	echo "User: ${seedboxfiletest}"
+	echo "User: ${seedboxinfo}"
 	echo "RPC Port: $(cat "${etcdir}/${deftransmission}-${seedboxinfo}/${cfgfile}" | grep rpc-port | awk -F " " '{print $2}' | awk -F "," '{print $1}')"
 	echo "Disk Usage: $(du -sh "${sbdirectories}/${seedboxinfo}" | awk -F " " '{print $1}')"
 	echo "Downloads count: $(find "${sbdirectories}/${seedboxinfo}/downloads" -mindepth 1 -maxdepth 1 | wc -l)"
