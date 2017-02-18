@@ -556,7 +556,7 @@ fn_details_process(){
 	echo "Disk Usage: $(du -sh "${sbdirectories}/${seedboxinfo}" | awk -F " " '{print $1}')"
 	echo "Downloads count: $(find "${sbdirectories}/${seedboxinfo}/downloads" -mindepth 1 -maxdepth 1 | wc -l)"
 	echo "Incomplete count: $(find "${sbdirectories}/${seedboxinfo}/incomplete" -mindepth 1 -maxdepth 1 | wc -l)"
-	echo "In Transmission: $(find "${libdir}/${tuprocess}-${seedboxinfo}/.config/${deftransmission}/resume" -mindepth 1 -maxdepth 1 | wc -l)"
+	echo "In Transmission: $(find "${libdir}/${deftransmission}-${seedboxinfo}/.config/${deftransmission}-/resume" -mindepth 1 -maxdepth 1 | wc -l)"
 	echo ""
 }
 
@@ -566,7 +566,7 @@ fn_details(){
 	echo "#################################"
 	if [ "${username}" == "all" ]; then
 		find "${sbdirectories}" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r file; do
-			seedboxinfo="$(basename $file)"
+			seedboxinfo="$(basename "${file}")"
 			if [ -d "${etcdir}/${deftransmission}-${seedboxfiletest}" ]; then
 			fn_details_process
 			fi
