@@ -33,9 +33,9 @@ selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 fn_usage(){
 	echo "Info! Please, specify a command and a username"
 	echo "Usage: ./${selfname} [command] [username]"
-	echo "Available commands: 
+	echo "Available commands:"
 	echo " * ./${selfname} deploy [username] - Deploy a new seedbox"
-	echo " * ./${selfname} clean [username] - Remove an existing seedbox
+	echo " * ./${selfname} clean [username] - Remove an existing seedbox"
 	echo " * ./${selfname} details [username] - Get details about an existing install"
 	echo " * ./${selfname} details all - Get details about all installed seedboxes"
 }
