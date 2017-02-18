@@ -565,10 +565,10 @@ fn_details(){
 	if [ "${username}" == "all" ]; then
 		find "${sbdirectories}" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r file; do
 			seedboxinfo="$(basename "${file}")"
-			if [ -d "${etcdir}/${deftransmission}-${seedboxfiletest}" ]; then
+			if [ -d "${etcdir}/${deftransmission}-${seedboxinfo}" ]; then
 			fn_details_process
+			echo ""
 			fi
-			echo 
 		done
 	elif [ -d "${userdir}" ]; then
 		seedboxinfo="${username}"
