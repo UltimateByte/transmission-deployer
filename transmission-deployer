@@ -8,12 +8,20 @@
 ### SETTINGS ##
 # Home directory for users (usually /home)
 homedir="/home"
-# Seedboxes directory: a subfolder containing seedbox users
-# Start with a / since it's a subfolder
-# Strip it if you don't wish to install in a subfolder
-sbdir="/seedbox"
+# Seedboxes directory: a subdirectory containing seedbox users
+# Start with a / since it's a subdir
+# Strip it if you don't wish to install in a dir
+sbdir="/seedboxes"
 # Default shell defined with usermod -s (usually /bin/bash)
 usershell="/bin/bash"
+# Optional: Bind listening IP
+ip="0.0.0.0"
+# Permissions on user dir
+chmodvalue="775"
+# Umask
+# Default 2 leads to chmod 775 files (rwx rwx r-x)
+# Umask 7 leads to chmod 770 files (rwx rwx ---)
+umask="2"
 
 #############
 ## Program ##
@@ -155,9 +163,9 @@ fn_check(){
 	# Checking required files and directories
 	# Homedir
 	if [ -d "${homedir}" ]; then
-		echo "[ ok ] Folder ${homedir} found"
+		echo "[ ok ] Directory ${homedir} found"
 	else
-		echo "[ERROR] Could not find folder ${homedir}"
+		echo "[ERROR] Could not find directory ${homedir}"
 		echo "Please, set a valid homedir value"
 		fn_sorry_exit
 	fi
@@ -182,18 +190,18 @@ fn_check(){
 		echo "[ERROR] could not find file ${defdir}/${deftransmission}"
 		fn_sorry_exit
 	fi
-	# Folder /var/lib/transmission-daemon
+	# Directory /var/lib/transmission-daemon
 	if [ -d "${libdir}/${deftransmission}" ]; then
-		echo "[ ok ] Folder ${libdir}/${deftransmission} found"
+		echo "[ ok ] Directory ${libdir}/${deftransmission} found"
 	else
-		echo "[ERROR] could not find folder ${libdir}/${deftransmission}"
+		echo "[ERROR] could not find directory ${libdir}/${deftransmission}"
 		fn_sorry_exit
 	fi
-	# Folder /etc/transmission-daemon
+	# Directory /etc/transmission-daemon
 	if [ -d "${etcdir}/${deftransmission}" ]; then
-		echo "[ ok ] Folder ${etcdir}/${deftransmission} found"
+		echo "[ ok ] Directory ${etcdir}/${deftransmission} found"
 	else
-		echo "[ERROR] could not find folder ${etcdir}/${deftransmission}"
+		echo "[ERROR] could not find directory ${etcdir}/${deftransmission}"
 		fn_sorry_exit
 	fi
 }
@@ -339,7 +347,7 @@ fn_user_dirs(){
 	chown "${username}":"${tservice}" "${userdir}"
 	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
 	chmod 775 "${sbdirectories}"
-	chmod -R 770 "${userdir}"
+	chmod -R ${chmodvalue} "${userdir}"
 }
 
 ### Dev notes
@@ -401,7 +409,7 @@ fn_create_config(){
 	\"alt-speed-time-enabled\": false,
 	\"alt-speed-time-end\": 1020,
 	\"alt-speed-up\": 50,
-	\"bind-address-ipv4\": \"0.0.0.0\",
+	\"bind-address-ipv4\": \"${ip}\",
 	\"bind-address-ipv6\": \"::\",
 	\"blocklist-enabled\": false,
 	\"blocklist-url\": \"http://www.example.com/blocklist\",
@@ -439,7 +447,7 @@ fn_create_config(){
 	\"ratio-limit-enabled\": false,
 	\"rename-partial-files\": true,
 	\"rpc-authentication-required\": true,
-	\"rpc-bind-address\": \"0.0.0.0\",
+	\"rpc-bind-address\": \"${ip}\",
 	\"rpc-enabled\": true,
 	\"rpc-password\": \"${rpcpasswd}\",
 	\"rpc-port\": ${trpcport},
@@ -458,7 +466,7 @@ fn_create_config(){
 	\"speed-limit-up-enabled\": false,
 	\"start-added-torrents\": true,
 	\"trash-original-torrent-files\": false,
-	\"umask\": 7,
+	\"umask\": ${umask},
 	\"upload-limit\": 100,
 	\"upload-limit-enabled\": 0,
 	\"upload-slots-per-torrent\": 50,
