@@ -503,16 +503,17 @@ fn_config_extra(){
 	echo "[ ok ] update-rc.d applied!"
 	
 	# Create .htaccess
-	if [ ! -f "${downloadsdir}/.htaccess}" ]; then
+	if [ ! -f "${downloadsdir}/.htaccess" ]; then
 		echo "Creating .htaccess"
 		touch "${downloadsdir}/.htaccess}"
 		echo "# protect the htaccess file
 		<files .htaccess>
 		order allow,deny
 		deny from all
-		</files>" > "${downloadsdir}/.htaccess}"
+		</files>" > "${downloadsdir}/.htaccess"
 		echo "[ ok ] .htaccess created!"
 		echo ""
+	fi
 }
 
 fn_start_back(){
