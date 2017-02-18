@@ -1,7 +1,16 @@
 # transmission-deployer
 Deploy and manage multiple transmission-daemons in Debian based distros.  
-Tested on Debian 8.5, should also work with Ubuntu.  
+Tested on Debian 8.7, should also work with Ubuntu.  
 
+The default directory structure is:  
+````bash
+/home/seedboxes/username/
+/home/seedboxes/username/downloads
+/home/seedboxes/username/downloads/.htacces
+/home/seedboxes/username/incomplete
+/etc/transmission-daemon-username
+/var/lib/transmission-daemon-username
+````
 ### Requirements
 * Have a Debian based distro
 * Have transmission-daemon installed 
@@ -10,7 +19,7 @@ Tested on Debian 8.5, should also work with Ubuntu.
 ### What it does
 * Checks your current installation
 * Creates a new user
-* Asks you for RPC info (port & password)
+* Asks for RPC info (port & password)
 * Creates download and incomplete directories with right permissions
 * Adds the user to debian-transmission group
 * Duplicates original transmission-daemon to a new one corresponding to the corresponding transmission-daemon-user
