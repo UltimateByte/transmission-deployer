@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.1
+# Version: 0.2
 
 ### SETTINGS ##
 # Home directory for users (usually /home)
@@ -33,7 +33,11 @@ selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 fn_usage(){
 	echo "Info! Please, specify a command and a username"
 	echo "Usage: ./${selfname} [command] [username]"
-	echo "Available commands: deploy; clean"
+	echo "Available commands: 
+	echo " * ./${selfname} deploy [username] - Deploy a new seedbox"
+	echo " * ./${selfname} clean [username] - Remove an existing seedbox
+	echo " * ./${selfname} details [username] - Get details about an existing install"
+	echo " * ./${selfname} details all - Get details about all installed seedboxes"
 }
 
 # Check user input
@@ -56,6 +60,8 @@ if [ "$1" == "deploy" ]; then
 	command="deploy"
 elif [ "$1" == "clean" ]; then
 	command="clean"
+elif [ "$1" == details ]; then
+	command="details"
 # And exit on invalid command
 else
 	echo "[ERROR] Invalid command!"
@@ -114,15 +120,17 @@ ucfgdir="${libdir}/${tuprocess}/info"
 tuprocesspath="${initdir}/${tuprocess}"
 
 fn_prompt_continue_y(){
-	while true; do
-		read -e -i "y" -p "Continue? [Y/n]" yn
-		case $yn in
-			[Yy]* ) echo "Let's go!"; sleep 1; break;;
-			[Nn]* ) echo "Aborting!"; exit 0;;
-		* ) echo "Please answer yes or no.";;
-		esac
-	done
-	echo ""
+	if [ "${command}" != "details" ]; then
+		while true; do
+			read -e -i "y" -p "Continue? [Y/n]" yn
+			case $yn in
+				[Yy]* ) echo "Let's go!"; sleep 1; break;;
+				[Nn]* ) echo "Aborting!"; exit 0;;
+			* ) echo "Please answer yes or no.";;
+			esac
+		done
+		echo ""
+	fi
 }
 
 fn_sorry_exit(){
@@ -477,21 +485,34 @@ fn_create_config(){
 	ln -vsf "${tuconfig}" "${utlibconfig}"
 }
 
-fn_config_extra(){
-echo "Adjusting ${initdir}/${tuprocess} to fit user..."
-# Replace default transmission process name ocurrences by user transmission process name
-sed -i "s/${deftransmission}/${tuprocess}/g" "${initdir}/${tuprocess}"
-echo "[ ok ] New process now fits user!"
-# Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
-echo "Updating config location info"
-sed -i "s@${tdefcfgdir}@${ucfgdir}@g" "${udefdir}"
-echo "[ ok ] Config location info updated!"
-echo ""
 
-# Process upon system boot
-echo "Allowing ${tuprocess} to run on boot"
-update-rc.d "${tuprocess}" defaults
-echo "[ ok ] update-rc.d applied!"
+fn_config_extra(){
+	echo "Adjusting ${initdir}/${tuprocess} to fit user..."
+	# Replace default transmission process name ocurrences by user transmission process name
+	sed -i "s/${deftransmission}/${tuprocess}/g" "${initdir}/${tuprocess}"
+	echo "[ ok ] New process now fits user!"
+	# Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
+	echo "Updating config location info"
+	sed -i "s@${tdefcfgdir}@${ucfgdir}@g" "${udefdir}"
+	echo "[ ok ] Config location info updated!"
+	echo ""
+
+	# Process upon system boot
+	echo "Allowing ${tuprocess} to run on boot"
+	update-rc.d "${tuprocess}" defaults
+	echo "[ ok ] update-rc.d applied!"
+	
+	# Create .htaccess
+	if [ ! -f "${downloadsdir}/.htaccess}" ]; then
+		echo "Creating .htaccess"
+		touch "${downloadsdir}/.htaccess}"
+		echo "# protect the htaccess file
+		<files .htaccess>
+		order allow,deny
+		deny from all
+		</files>" > "${downloadsdir}/.htaccess}"
+		echo "[ ok ] .htaccess created!"
+		echo ""
 }
 
 fn_start_back(){
@@ -527,12 +548,46 @@ fn_clean_complete(){
 	echo "Credits: UltimateByte"
 }
 
+fn_details_process(){
+	echo "########"
+	echo "User: ${seedboxfiletest}"
+	echo "RPC Port: "$(cat "${etcdir}/${deftransmission}-${seedboxinfo}/${cfgfile}" | grep rpc-port | awk -F " " '{print $2}' | awk -F "," '{print $1}')"
+	echo "Disk Usage: $(du -sh "${sbdirectories}/${seedboxinfo}" | awk -F " " '{print $1}')"
+	echo "Downloads count: $(find "${sbdirectories}/${seedboxinfo}/downloads" -mindepth 1 -maxdepth 1 | wc -l)"
+	echo "Incomplete count: $(find "${sbdirectories}/${seedboxinfo}/incomplete" -mindepth 1 -maxdepth 1 | wc -l)"
+	echo "In Transmission: $(find "${libdir}/${tuprocess}-${seedboxinfo}/.config/${deftransmission}/resume" -mindepth 1 -maxdepth 1 | wc -l)"
+	echo ""
+}
+
+fn_details(){
+	echo "#################################"
+	echo "######## Seedbox details ########"
+	echo "#################################"
+	if [ "${username}" == "all" ]; then
+		find "${sbdirectories}" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r file; do
+			seedboxinfo="$(basename $file)"
+			if [ -d "${etcdir}/${deftransmission}-${seedboxfiletest}" ]; then
+			fn_details_process
+			fi
+			echo 
+		done
+	elif [ -d "${userdir}" ]; then
+		seedboxinfo="${username}"
+		fn_details_process
+	else 
+		echo "[ERROR] Cannot find ${userdir}"
+		exit
+	fi
+}
+
 fn_check_root
 fn_check
 fn_welcome
 fn_prompt_continue_y
-fn_stop_transmission
+if [ "${command}" == "details" ]; then
+	fn_details
 if [ "${command}" == "deploy" ]; then
+	fn_stop_transmission
 	fn_check_previously_installed
 	fn_check_user_exists
 	fn_create_user
@@ -543,6 +598,7 @@ if [ "${command}" == "deploy" ]; then
 	fn_start_back
 	fn_setup_complete
 elif [ "${command}" == "clean" ]; then
+	fn_stop_transmission
 	fn_check_previously_installed
 	fn_check_user_exists
 	fn_remove_user
