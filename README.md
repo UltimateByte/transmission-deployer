@@ -20,7 +20,7 @@ The default directory structure is:
 * Checks your current installation
 * Creates a new user
 * Asks for RPC info (port & password)
-* Creates download and incomplete directories with right permissions
+* Creates download and incomplete directories with correct permissions
 * Adds the user to debian-transmission group
 * Duplicates original transmission-daemon to a new one corresponding to the corresponding transmission-daemon-user
 * Edits all required files
@@ -160,6 +160,11 @@ RPC Password: lol
 RPC URL: /transmission
 
 Credits: UltimateByte
+````
+
+## Details
+
+````
 root@webserver:~/deployscripts# ./transmission-deployer details downloader
 #################################
 ######## Seedbox details ########
@@ -237,8 +242,10 @@ Disk Usage: 982G
 Downloads count: 1
 Incomplete count: 7
 In Transmission: 6
+````
 
-
+## Clean
+````
 root@webserver:~/deployscripts# ./transmission-deployer clean downloader
 
 Checking your configuration...
