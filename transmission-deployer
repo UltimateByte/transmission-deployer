@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.6
+# Version: 0.7
 
 ### SETTINGS ##
 # Home directory for users (usually /home)
@@ -313,6 +313,12 @@ fn_remove_user(){
 				sleep 1; fn_logecho "removing ${username}"
 				userdel -r "${username}"
 				fn_logecho "[ ok ] Removed previous ${username} and its home directory"
+				if [ -f "/etc/apache2/conf-enabled${apachealias}/${username}" ]; then
+				fn_logecho "Removing apache2 alias: ${apachealias}/${username}"
+				rm "/etc/apache2/conf-enabled${apachealias}/${username}"
+				fn_logecho "Reloading apache2"
+				service apache2 reload
+				fi
 			fi
 		fi
 	fi
@@ -526,8 +532,9 @@ fn_config_extra(){
 
 	# Create apache2 alias
 	if [ -d "/etc/apache2/conf-enabled" ]; then
-		fn_logecho "Creating apache2 alis for ${apachealias}/${username}"
-		echo "Alias /${username} \"${downloadsdir}\"" > "/etc/apache2/conf-enabled/${apachealias}/${username}"
+		fn_logecho "Creating apache2 alias: ${apachealias}/${username}"
+		touch "/etc/apache2/conf-enabled${apachealias}/${username}"
+		echo "Alias /${username} \"${downloadsdir}\"" > "/etc/apache2/conf-enabled${apachealias}/${username}"
 		fn_logecho "Reloading apache2"
 		service apache2 reload
 	fi
