@@ -314,10 +314,10 @@ fn_remove_user(){
 				userdel -r "${username}"
 				fn_logecho "[ ok ] Removed previous ${username} and its home directory"
 				if [ -f "/etc/apache2/conf-enabled${apachealias}/${username}" ]; then
-				fn_logecho "Removing apache2 alias: ${apachealias}/${username}"
-				rm "/etc/apache2/conf-enabled${apachealias}/${username}"
-				fn_logecho "Reloading apache2"
-				service apache2 reload
+					fn_logecho "Removing apache2 alias: ${apachealias}/${username}"
+					rm "/etc/apache2/conf-enabled${apachealias}/${username}"
+					fn_logecho "Reloading apache2"
+					service apache2 reload
 				fi
 			fi
 		fi
