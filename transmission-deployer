@@ -237,7 +237,7 @@ fn_check(){
 fn_stop_transmission(){
 	# Stopping transmission
 	# If process is started
-	if [ -n "$(ps -auxn | grep "${deftransmission} ")" ]; then
+	if [ -n "$(ps auxn | grep "${deftransmission} " | grep -v grep)" ]; then
 		fn_logecho "Stopping default ${deftransmission}"
 		"${tdefprocesspath}" stop
 	fi
