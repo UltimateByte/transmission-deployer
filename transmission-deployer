@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.9
+# Version: 1.0
 
 ### SETTINGS ##
 # Home directory for users (usually /home)
@@ -236,8 +236,12 @@ fn_check(){
 
 fn_stop_transmission(){
 	# Stopping transmission
-	fn_logecho "Stopping default ${deftransmission}"
-	"${tdefprocesspath}" stop
+	# If process is started
+	if [ -n "$(ps -auxn | grep "${deftransmission} ")" ]; then
+		fn_logecho "Stopping default ${deftransmission}"
+		"${tdefprocesspath}" stop
+	fi
+	# Instance
 	if [ -f "${tuprocesspath}" ]; then
 		fn_logecho "Stopping ${tuprocess}"
 		"${tuprocesspath}" stop
