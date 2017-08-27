@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.7
+# Version: 0.9
 
 ### SETTINGS ##
 # Home directory for users (usually /home)
@@ -42,7 +42,7 @@ fn_usage(){
 	fn_echo "Usage: ./${selfname} [command] [username]"
 	fn_echo "Available commands:"
 	fn_echo " * ./${selfname} deploy [username] - Deploy a new seedbox"
-	fn_echo " * ./${selfname} clean [username] - Remove an existing seedbox"
+	fn_echo " * ./${selfname} remove [username] - Remove an existing seedbox"
 	fn_echo " * ./${selfname} details [username] - Get details about an existing install"
 	fn_echo " * ./${selfname} details all - Get details about all installed seedboxes"
 	fn_echo " * ./${selfname} start [username] - Start transmission instance"
@@ -68,8 +68,8 @@ fi
 # Set command to something relevant
 if [ "$1" == "deploy" ]; then
 	command="deploy"
-elif [ "$1" == "clean" ]; then
-	command="clean"
+elif [ "$1" == "remove" ]; then
+	command="remove"
 elif [ "$1" == details ]; then
 	command="details"
 elif [ "$1" == "start" ]; then
@@ -236,18 +236,18 @@ fn_check(){
 
 fn_stop_transmission(){
 	# Stopping transmission
-	fn_logecho "Stopping ${deftransmission} in order to continue the process"
+	fn_logecho "Stopping default ${deftransmission}"
 	"${tdefprocesspath}" stop
 	if [ -f "${tuprocesspath}" ]; then
-		fn_logecho "Stopping ${tuprocess} in order to continue the process"
+		fn_logecho "Stopping ${tuprocess}"
 		"${tuprocesspath}" stop
 	fi
 }
 
 fn_check_previously_installed(){
 	if [ -f "${tuprocesspath}" ]; then
-		fn_logecho "[WARNING] ${tuprocess} is already installed!"
-		fn_logecho "Do you wish to autoclean the old transmission from ${username} ?"
+		fn_logecho "[WARNING] ${tuprocess} was found!"
+		fn_logecho "Do you wish to autoclean the old transmission from ${username}?"
 		fn_logecho "Info! This will remove any torrent and transmission settings."
 		while true; do
 			read -e -p "Continue? [y/n]" yn
@@ -287,7 +287,7 @@ fn_remove_user(){
 	if [ "${userexists}" == "1" ]; then
 		if [ -d "${userdir}" ]; then
 			fn_logecho "Info! ${username} already exists"
-			fn_logecho "Do you wish to remove the user and its home directory ?"
+			fn_logecho "Do you wish to entirely remove the user and its home directory?"
 			fn_logecho "[WARNING] Any file in ${userdir} will be lost!"
 			while true; do
 				read -e -p "Continue? [y/n]" yn
@@ -299,18 +299,9 @@ fn_remove_user(){
 			done
 			if [ "${cleanuser}" == "yes" ]; then
 				fn_logecho "Closing ${username} processes"
-				fn_logecho "Info! Press ctrl + c to abort !"
-				sleep 2
 				killall -KILL -u "${username}"
 				fn_logecho "[ ok ] Closed processes"
 				fn_logecho "Removing user: ${username} and its home: ${userdir}"
-				fn_logecho "Info! Press ctrl + c to abort !"
-				sleep 1; fn_logecho "5"
-				sleep 1; fn_logecho "4"
-				sleep 1; fn_logecho "3"
-				sleep 1; fn_logecho "2"
-				sleep 1; fn_logecho "1"
-				sleep 1; fn_logecho "removing ${username}"
 				userdel -r "${username}"
 				fn_logecho "[ ok ] Removed previous ${username} and its home directory"
 				if [ -f "/etc/apache2/conf-enabled${apachealias}/${username}" ]; then
@@ -331,7 +322,7 @@ fn_create_user(){
 	if [ "${userexists}" == "0" ]||[ "${cleanuser}" == "1" ]; then
 		fn_logecho "Info! ${username} doesn't exist"
 		fn_logecho "Home direcotry for this user set to dir: ${userdir}"
-		fn_logecho "Create new transmission server for user: ${username} ?"
+		fn_logecho "Create new transmission server for user: ${username}?"
 		fn_prompt_continue_y
 		# Adding user
 		if [ ! -d ${sbdirectories} ]; then
@@ -347,8 +338,14 @@ fn_create_user(){
 		fn_logecho "Info! It fixes permission issues but allows this user to access other files from the group and reciprocally"
 		usermod -a -G "${tservice}" "${username}"
 		fn_logecho "[ ok ] User created"
+		while [ -z "${userpassword}" ]; do
+			fn_logecho "Info! Please, set the user password for RPC, SSH and FTP"
+			fn_logecho "Warning! No confirmation"
+			fn_logecho "${username} password:"
+			read -rs userpassword
+		done
 		fn_logecho "Applying password to user: ${username}:"
-		echo -e "${rpcpasswd}\n${rpcpasswd}" | passwd "${username}"
+		echo -e "${userpassword}\n${userpassword}" | passwd "${username}"
 	fi
 }
 
@@ -396,12 +393,6 @@ fn_transmission_duplicate(){
 
 # Generate config file
 fn_create_config(){
-	while [ -z "${rpcpasswd}" ]; do
-		fn_logecho "Info! Please, set the user password for RPC, SSH and FTP"
-		fn_logecho "Warning! No confirmation"
-		fn_logecho "${username} password:"
-		read -rs rpcpasswd
-	done
 	fn_logecho "Please, set a listening IP (leave empty for default 0.0.0.0)"
 	fn_logecho "IP:"
 	read -r ip
@@ -474,7 +465,7 @@ fn_create_config(){
 	\"rpc-authentication-required\": true,
 	\"rpc-bind-address\": \"${ip}\",
 	\"rpc-enabled\": true,
-	\"rpc-password\": \"${rpcpasswd}\",
+	\"rpc-password\": \"${userpassword}\",
 	\"rpc-port\": ${trpcport},
 	\"rpc-url\": \"/transmission/\",
 	\"rpc-username\": \"${username}\",
@@ -544,21 +535,21 @@ fn_setup_complete(){
 	fn_logecho "Transmission server Deployment"
 	fn_logecho "########################################################"
 	fn_logecho "Installation complete!"
-	fn_logecho "You can now try to run the daemon with:"
-	fn_logecho "${initdir}/${tuprocess} start"
-	fn_logecho "Info:"
+	fn_logecho "You can now start the daemon with:"
+	fn_logecho "./${selfname} start ${username}"
+	fn_logecho "Info:"''''''''''
 	fn_logecho "Username: ${username}"
 	fn_logecho "RPC Port: ${trpcport}"
-	fn_logecho "RPC Password: ${rpcpasswd}"
+	fn_logecho "RPC Password: ${userpassword}"
 	fn_logecho "IP: ${ip}"
 	fn_logecho "RPC URL: /transmission"
 	fn_logecho "Credits: UltimateByte"
 }
 
-fn_clean_complete(){
-	fn_logecho "Transmission server cleaning"
+fn_remove_complete(){
+	fn_logecho "Transmission server remove"
 	fn_logecho "########################################################"
-	fn_logecho "Cleaning complete!"
+	fn_logecho "Removal complete!"
 	fn_logecho "Credits: UltimateByte"
 }
 
@@ -625,7 +616,6 @@ elif [ "${command}" == "start" ]||[ "${command}" == "stop" ]||[ "${command}" == 
 	fn_control_instance
 elif [ "${command}" == "deploy" ]; then
 	fn_check
-	fn_prompt_continue_y
 	fn_welcome
 	fn_stop_transmission
 	fn_check_previously_installed
@@ -636,7 +626,7 @@ elif [ "${command}" == "deploy" ]; then
 	fn_create_config
 	fn_config_extra
 	fn_setup_complete
-elif [ "${command}" == "clean" ]; then
+elif [ "${command}" == "remove" ]; then
 	fn_check
 	fn_prompt_continue_y
 	fn_welcome
@@ -644,5 +634,5 @@ elif [ "${command}" == "clean" ]; then
 	fn_check_previously_installed
 	fn_check_user_exists
 	fn_remove_user
-	fn_clean_complete
+	fn_remove_complete
 fi
