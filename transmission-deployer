@@ -403,6 +403,7 @@ fn_create_config(){
 	if [ -z "${ip}" ]; then
 		ip="0.0.0.0"
 	fi
+	fn_logecho "IP set to: ${ip}"
 	fn_logecho "Please, set an RPC port (leave empty for default 9091)"
 	fn_logecho "RPC port:"
 	read -r trpcport
@@ -532,6 +533,7 @@ fn_config_extra(){
 		echo "Alias /${username} \"${downloadsdir}\"" > "/etc/apache2/conf-enabled${apachealias}/${username}"
 		fn_logecho "Reloading apache2"
 		service apache2 reload
+		aliascreated="yes"
 	fi
 }
 
@@ -543,10 +545,14 @@ fn_setup_complete(){
 	fn_logecho "./${selfname} start ${username}"
 	fn_logecho "Info:"''''''''''
 	fn_logecho "Username: ${username}"
+	fn_logecho "Password: ${userpassword}"
+	fn_logecho "IP: ${ip} or $(hostname)"
+	if [ "${aliascreated}" == "yes" ]; then
+		fn_logecho "Files Access: http://${ip}${apachealias}/${username} or http://$(hostname)${apachealias}/${username}"
+	fi
 	fn_logecho "RPC Port: ${trpcport}"
-	fn_logecho "RPC Password: ${userpassword}"
-	fn_logecho "IP: ${ip}"
 	fn_logecho "RPC URL: /transmission"
+	fn_logecho ""
 	fn_logecho "Credits: UltimateByte"
 }
 
