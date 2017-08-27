@@ -390,22 +390,22 @@ fn_transmission_duplicate(){
 
 # Generate config file
 fn_create_config(){
-	while [ -n "${rpcpasswd}" ]; do
+	while [ -z "${rpcpasswd}" ]; do
 		fn_logecho "Info! Please, set the user password for RPC, SSH and FTP"
 		fn_logecho "Warning! No confirmation"
-		fn_logecho "RPC password:"
+		fn_logecho "${username} password:"
 		read -rs rpcpasswd
 	done
 	fn_logecho "Please, set a listening IP (leave empty for default 0.0.0.0)"
 	fn_logecho "IP:"
 	read -r ip
-	if [ -n "${ip}" ]; then
+	if [ -z "${ip}" ]; then
 		ip="0.0.0.0"
 	fi
 	fn_logecho "Please, set an RPC port (leave empty for default 9091)"
 	fn_logecho "RPC port:"
 	read -r trpcport
-	if [ -n "${trpcport}" ]; then
+	if [ -z "${trpcport}" ]; then
 		trpcport="9091"
 	fi
 	fn_logecho "RPC port set to: ${trpcport}"
