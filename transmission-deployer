@@ -604,12 +604,12 @@ fn_control_instance(){
 	if [ "${username}" == "all" ]; then
 		find "${sbdirectories}" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r file; do
 			selectedseedbox="$(basename "${file}")"
-			if [ -d "${etcdir}/${deftransmission}-${selectedseedbox}" ]; then
+			if [ -f "${etcdir}/${deftransmission}-${selectedseedbox}" ]; then
 				fn_refresh_tuprocess
 				fn_append_command
 			fi
 		done
-	elif [ -d "${tuprocesspath}" ]; then
+	elif [ -f "${tuprocesspath}" ]; then
 		fn_append_command
 	else 
 		fn_logecho "[ERROR] Cannot find ${tuprocesspath}"
