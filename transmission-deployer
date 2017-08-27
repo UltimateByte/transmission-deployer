@@ -604,7 +604,7 @@ fn_control_instance(){
 	if [ "${username}" == "all" ]; then
 		find "${sbdirectories}" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r file; do
 			selectedseedbox="$(basename "${file}")"
-			if [ -f "${etcdir}/${deftransmission}-${selectedseedbox}" ]; then
+			if [ -d "${etcdir}/${deftransmission}-${selectedseedbox}" ]; then
 				fn_refresh_tuprocess
 				fn_append_command
 			fi
