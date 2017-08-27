@@ -279,7 +279,7 @@ fn_check_user_exists(){
 		userexists="1"
 	else
 		userexists="0"
-	fi	
+	fi
 }
 
 # Prompts for removing an existing user
@@ -368,16 +368,10 @@ fn_user_dirs(){
 
 ### Dev notes
 # https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
-# cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2 
-# cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2 
-# cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2 
-# cp -a /etc/transmission-daemon /etc/transmission-daemon2 
-# cp /etc/default/transmission-daemon /etc/default/transmission-daemon2 
-# chmod –R 777 /usr/bin/transmission-daemon2 
-# chmod –R 777 /etc/init.d/transmission-daemon2 
-# chmod –R 777 /var/lib/transmission-daemon2 
-# chmod –R 777 /etc/transmission-daemon2
-# chmod –R 777 /etc/default/transmission-daemon2
+# cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2
+# cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2
+# cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2
+# cp -a /etc/transmission-daemon /etc/transmission-daemon2
 
 fn_transmission_duplicate(){
 	fn_logecho "Duplicating ${deftransmission} to ${tuprocess}..."
@@ -517,7 +511,7 @@ fn_config_extra(){
 	fn_logecho "Allowing ${tuprocess} to run on boot"
 	update-rc.d "${tuprocess}" defaults
 	fn_logecho "[ ok ] update-rc.d applied!"
-	
+
 	# Create .htaccess
 	if [ ! -f "${downloadsdir}/.htaccess" ]; then
 		fn_logecho "Creating .htaccess"
@@ -529,7 +523,7 @@ fn_config_extra(){
 		</files>" > "${downloadsdir}/.htaccess"
 		fn_logecho "[ ok ] .htaccess created!"
 	fi
-	
+
 	# Create apache2 alias
 	if [ -d "/etc/apache2/conf-enabled" ]; then
 		fn_logecho "Creating apache2 alis for ${apachealias}/${username}"
@@ -587,7 +581,7 @@ fn_details(){
 	elif [ -d "${userdir}" ]; then
 		seedboxinfo="${username}"
 		fn_details_process
-	else 
+	else
 		fn_logecho "[ERROR] Cannot find ${userdir}"
 		exit
 	fi
@@ -611,7 +605,7 @@ fn_control_instance(){
 		done
 	elif [ -f "${tuprocesspath}" ]; then
 		fn_append_command
-	else 
+	else
 		fn_logecho "[ERROR] Cannot find ${tuprocesspath}"
 		exit
 	fi
