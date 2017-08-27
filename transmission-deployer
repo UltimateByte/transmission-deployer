@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.5
+# Version: 0.6
 
 ### SETTINGS ##
 # Home directory for users (usually /home)
@@ -136,7 +136,7 @@ ucfgdir="${libdir}/${tuprocess}/info"
 tuprocesspath="${initdir}/${tuprocess}"
 
 fn_refresh_tuprocess(){
-	username="${selectedseedbox}
+	username="${selectedseedbox}"
 	tuprocess="${deftransmission}-${username}"
 	# User config file full patch
 	tuconfig="${etcdir}/${tuprocess}/${cfgfile}"
@@ -260,7 +260,7 @@ fn_check_previously_installed(){
 		echo ""
 		if [ "${cleanoldtransmission}" == "yes" ]; then
 			fn_logecho "Removing user ${username} from group ${tservice}..."
-			deluser ${username} ${tservice}
+			deluser "${username}" "${tservice}"
 			fn_logecho "[ ok ] User is not a part of ${tservice} anymore!"
 			fn_logecho "Removing ${tuprocess} files..."
 			rm -R "${bindir:?}/${tuprocess:?}" "${initdir:?}/${tuprocess:?}" "${libdir:?}/${tuprocess:?}" "${etcdir:?}/${tuprocess:?}" "${defdir:?}/${tuprocess:?}"
@@ -342,7 +342,7 @@ fn_create_user(){
 		usermod -a -G "${tservice}" "${username}"
 		fn_logecho "[ ok ] User created"
 		fn_logecho "Applying password to user: ${username}:"
-		echo -e "${rpcpasswd}\n${rpcpasswd}" | passwd ${username}
+		echo -e "${rpcpasswd}\n${rpcpasswd}" | passwd "${username}"
 	fi
 }
 
@@ -414,7 +414,7 @@ fn_create_config(){
 	if [ -n "${trpcport}" ]; then
 		trpcport="9091"
 	fi
-	fn_logecho "RPC port set to: ${rpcport}"
+	fn_logecho "RPC port set to: ${trpcport}"
 	fn_logecho "Creating config file..."
 	if [ ! -d "${etcdir}/${tuprocess}" ]; then
 		fn_sorry_exit
@@ -595,7 +595,7 @@ fn_details(){
 
 # Append a start/stop/restart command to a transmission instance
 fn_append_command(){
-	fn_logecho "Command: "${path}" ${command}"
+	fn_logecho "Command: ${command} ${username} instance"
 	"${tuprocesspath}" "${command}"
 	fn_logecho "[OK] ${command} ${username}"
 }
