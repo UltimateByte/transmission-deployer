@@ -27,7 +27,7 @@ chmodvalue="775"
 # Umask 7 leads to chmod 770 files (rwx rwx ---)
 umask="2"
 
-## Extra configuration 
+## Extra configuration
 
 # Apache2 alias /apachealias/username (start with /)
 apachealias="/dl"
@@ -327,7 +327,7 @@ fn_remove_user_exists(){
 			fi
 		fi
 	else
-		fn_logecho "Info! Linux user: ${username} does not exist"	
+		fn_logecho "Info! Linux user: ${username} does not exist"
 	fi
 }
 
@@ -521,23 +521,15 @@ fn_config_extra(){
 	update-rc.d "${tuprocess}" defaults
 	fn_logecho "[ ok ] update-rc.d applied!"
 
-	# Create .htaccess
-	if [ ! -f "${downloadsdir}/.htaccess" ]; then
-		fn_logecho "Creating .htaccess"
-		touch "${downloadsdir}/.htaccess}"
-		echo "# protect the htaccess file
-		<files .htaccess>
-		order allow,deny
-		deny from all
-		</files>" > "${downloadsdir}/.htaccess"
-		fn_logecho "[ ok ] .htaccess created!"
-	fi
-
 	# Create apache2 alias
 	if [ -d "/etc/apache2/conf-enabled" ]; then
 		fn_logecho "Creating apache2 alias: ${apachealias}/${username}"
 		touch "/etc/apache2/conf-enabled/${username}.conf"
-		echo "Alias ${apachealias}/${username} \"${downloadsdir}\"" > "/etc/apache2/conf-enabled/${username}.conf"
+echo "Alias ${apachealias}/${username} \"${downloadsdir}\"
+<Directory \"${downloadsdir}\">
+ 	Require all granted
+	AllowOverride all
+</Directory>" > "/etc/apache2/conf-enabled/${username}.conf"
 		fn_logecho "Reloading apache2"
 		service apache2 reload
 		aliascreated="yes"
@@ -550,7 +542,7 @@ fn_setup_complete(){
 	fn_logecho "Installation complete!"
 	fn_logecho "You can now start the daemon with:"
 	fn_logecho "./${selfname} start ${username}"
-	fn_logecho "Info:"''''''''''
+	fn_logecho "Info:"
 	fn_logecho "Username: ${username}"
 	fn_logecho "Password: ${userpassword}"
 	fn_logecho "IP: ${ip} or $(hostname)"
