@@ -627,6 +627,7 @@ elif [ "${command}" == "start" ]||[ "${command}" == "stop" ]||[ "${command}" == 
 elif [ "${command}" == "deploy" ]; then
 	fn_check
 	fn_welcome
+	fn_prompt_continue_y
 	fn_stop_transmission
 	fn_check_previously_installed
 	fn_check_user_exists
