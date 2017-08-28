@@ -3,7 +3,7 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 0.9b
+# Version: 0.9.1b
 
 ### SETTINGS ###
 
@@ -15,6 +15,13 @@
 homedir="/home"
 # (optional) Seedboxes directory
 sbdir="/seedboxes" # Start with a / since it's a subdir or strip it if unused
+
+## Transmission default settings
+
+# What IP to listen to
+# 0.0.0.0 binds to all available IPs 
+# If left unset, you will be prompted for an IP for every installation
+defaultip=""
 
 ## Permissions
 
@@ -57,12 +64,12 @@ fn_usage(){
 	fn_echo "Info! Please, specify a command and a username"
 	fn_echo "Usage: ./${selfname} [command] [username]"
 	fn_echo "Available commands:"
-	fn_echo " * ./${selfname} deploy [username] - Deploy a new seedbox"
-	fn_echo " * ./${selfname} remove [username] - Remove an existing seedbox"
-	fn_echo " * ./${selfname} details [username] - Get details about an existing install"
-	fn_echo " * ./${selfname} details all - Get details about all installed seedboxes"
-	fn_echo " * ./${selfname} start/stop/restart [username] - Start/stop/restart transmission instance"
-	fn_echo " * ./${selfname} start/stop/restart all - Start/stop/restart transmission instance"
+	fn_echo " * deploy [username] - Deploy a new seedbox instance"
+	fn_echo " * remove [username] - Remove an existing seedbox instance & user"
+	fn_echo " * details [username/all] - Get details about one or all instances"
+	fn_echo " * start/stop/restart [username/all] - Start/stop/restart one or all instances"
+	fn_echo "Example: ./${selfname} details jonsnow"
+	fn_echo "Example: ./${selfname} start all"
 }
 
 # Check user input
@@ -400,12 +407,17 @@ fn_transmission_duplicate(){
 
 # Set config
 fn_set_config(){
-	fn_logecho "1/3 Please, set a listening IP: (leave empty for default 0.0.0.0)"
-	read -r ip
-	if [ -z "${ip}" ]; then
-		ip="0.0.0.0"
+	if [ -z "${defaultip}" ]; then
+		fn_logecho "1/3 Please, set a listening IP: (leave empty for default 0.0.0.0)"
+		read -r ip
+		if [ -z "${ip}" ]; then
+			ip="0.0.0.0"
+		fi
+		fn_logecho "IP set to: ${ip}"
+	else
+		fn_logecho "1/3 Default IP set within config: ${defaultip}"
+		ip=${defaultip}
 	fi
-	fn_logecho "IP set to: ${ip}"
 	fn_logecho "2/3 Please, set an RPC port: (leave empty for default 9091)"
 	read -r trpcport
 	if [ -z "${trpcport}" ]; then
@@ -625,10 +637,10 @@ elif [ "${command}" == "start" ]||[ "${command}" == "stop" ]||[ "${command}" == 
 elif [ "${command}" == "deploy" ]; then
 	fn_check
 	fn_welcome
-	fn_prompt_continue_y
 	fn_stop_transmission
 	fn_check_previously_installed
 	fn_set_config
+	fn_stop_transmission
 	fn_create_user
 	fn_user_dirs
 	fn_transmission_duplicate
@@ -638,8 +650,8 @@ elif [ "${command}" == "deploy" ]; then
 elif [ "${command}" == "remove" ]; then
 	fn_check
 	fn_welcome
-	fn_stop_transmission
 	fn_check_previously_installed
+	fn_stop_transmission
 	fn_remove_user_exists
 	fn_remove_complete
 fi
