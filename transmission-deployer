@@ -2,7 +2,7 @@
 # Multiple transmission-daemon deployer
 # Authors: UltimateByte
 # Website: https://www.terageek.org
-# Description: Creates new users and duplicates transmission-daemon for them
+# Description: Creates and manages multiple transmission-daemon instances
 # Version: 1.0
 
 ### SETTINGS ###
@@ -539,7 +539,7 @@ fn_config_extra(){
 		touch "/etc/apache2/conf-enabled/${username}.conf"
 echo "Alias ${apachealias}/${username} \"${downloadsdir}\"
 <Directory \"${downloadsdir}\">
- 	Require all granted
+	Require all granted
 	Options Indexes
 </Directory>" > "/etc/apache2/conf-enabled/${username}.conf"
 		fn_logecho "Reloading apache2"
