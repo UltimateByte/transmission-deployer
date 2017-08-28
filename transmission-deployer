@@ -540,7 +540,7 @@ fn_config_extra(){
 echo "Alias ${apachealias}/${username} \"${downloadsdir}\"
 <Directory \"${downloadsdir}\">
  	Require all granted
-	AllowOverride all
+	Options Indexes
 </Directory>" > "/etc/apache2/conf-enabled/${username}.conf"
 		fn_logecho "Reloading apache2"
 		service apache2 reload
