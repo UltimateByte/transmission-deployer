@@ -412,10 +412,6 @@ fn_set_config(){
 		trpcport="9091"
 	fi
 	fn_logecho "RPC port set to: ${trpcport}"
-	fn_logecho "Creating config file..."
-	if [ ! -d "${etcdir}/${tuprocess}" ]; then
-		fn_sorry_exit
-	fi
 	while [ -z "${userpassword}" ]; do
 		fn_logecho "3/3 Please, set the user password for RPC, SSH and FTP"
 		fn_logecho "Warning! No confirmation"
@@ -431,6 +427,7 @@ fn_write_config(){
 		fn_logecho "Don't worry, this setup will build it from scratch anyways"
 		touch "${tuconfig}"
 	fi
+	fn_logecho "Creating config file..."
 	# Write to actual config file
 	echo "{
 	\"alt-speed-down\": 50,
@@ -648,7 +645,6 @@ elif [ "${command}" == "deploy" ]; then
 	fn_setup_complete
 elif [ "${command}" == "remove" ]; then
 	fn_check
-	fn_prompt_continue_y
 	fn_welcome
 	fn_stop_transmission
 	fn_check_previously_installed
