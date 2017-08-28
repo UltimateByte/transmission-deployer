@@ -3,29 +3,44 @@
 # Authors: UltimateByte
 # Website: https://www.terageek.org
 # Description: Creates new users and duplicates transmission-daemon for them
-# Version: 1.0
+# Version: 0.9b
 
-### SETTINGS ##
-# Home directory for users (usually /home)
+### SETTINGS ###
+
+## Directories
+# Seedbox directories will be /homedir/sbdir/username
+# note that you can empty sbdir variable to have a /homedir/username structure
+
+# Home directory for users
 homedir="/home"
-# Seedboxes directory: a subdirectory containing seedbox users
-# Start with a / since it's a subdir
-# Strip it if you don't wish to install in a dir
-sbdir="/seedboxes"
+# (optional) Seedboxes directory
+sbdir="/seedboxes" # Start with a / since it's a subdir or strip it if unused
+
+## Permissions
+
 # Default shell defined with usermod -s (usually /bin/bash)
 usershell="/bin/bash"
 # Permissions on user dir
 chmodvalue="775"
 # Umask
-# Default 2 leads to chmod 775 files (rwx rwx r-x)
+# Umask 2 leads to chmod 775 files (rwx rwx r-x)
 # Umask 7 leads to chmod 770 files (rwx rwx ---)
 umask="2"
+
+## Extra configuration 
+
 # Apache2 alias /apachealias/username (start with /)
 apachealias="/dl"
 
 #############
 ## Program ##
 #############
+
+# Check that the script is launched with elevated privileges
+if [ "$(id -u)" != "0" ]; then
+	fn_echo "[ERROR] This script must be run with elevated privileges"
+	exit 1
+fi
 
 ## Misc Variables ##
 selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -35,6 +50,7 @@ if [ ! -f "ultimate-bash-api.sh" ]; then
 	wget https://raw.githubusercontent.com/UltimateByte/ultimate-bash-api/master/ultimate-bash-api.sh
 	chmod +x ultimate-bash-api.sh
 fi
+# shellcheck disable=SC1091
 source ultimate-bash-api.sh
 
 fn_usage(){
@@ -45,9 +61,8 @@ fn_usage(){
 	fn_echo " * ./${selfname} remove [username] - Remove an existing seedbox"
 	fn_echo " * ./${selfname} details [username] - Get details about an existing install"
 	fn_echo " * ./${selfname} details all - Get details about all installed seedboxes"
-	fn_echo " * ./${selfname} start [username] - Start transmission instance"
-	fn_echo " * ./${selfname} stop [username] - Stop transmission instance"
-	fn_echo " * ./${selfname} restart [username] - Restart transmission instance"
+	fn_echo " * ./${selfname} start/stop/restart [username] - Start/stop/restart transmission instance"
+	fn_echo " * ./${selfname} start/stop/restart all - Start/stop/restart transmission instance"
 }
 
 # Check user input
@@ -85,14 +100,6 @@ else
 	fn_usage
 	exit 1
 fi
-
-# Check that the script is launched with elevated privileges
-fn_check_root(){
-	if [ "$(id -u)" != "0" ]; then
-		fn_echo "[ERROR] This script must be run with elevated privileges"
-		exit 1
-	fi
-}
 
 ## Variables ###
 # MISC
@@ -150,6 +157,7 @@ fn_refresh_tuprocess(){
 	tuprocesspath="${initdir}/${tuprocess}"
 }
 
+# Prompt with Yes preselected
 fn_prompt_continue_y(){
 	while true; do
 		read -e -i "y" -p "Continue? [Y/n]" yn
@@ -161,19 +169,19 @@ fn_prompt_continue_y(){
 	done
 }
 
+# Displays an exit message
 fn_sorry_exit(){
 	fn_logecho "This setup can't go further, sorry!"
 	fn_logecho "Exiting..."
 	exit 1
 }
 
-# Welcome
-	fn_welcome(){
-	fn_echo "Transmission server deployment"
+# Displays a welcome message
+fn_welcome(){
+	fn_echo "Transmission server manager"
 	fn_echo "########################################################"
-	fn_echo "Please, take a moment to review your settings."
 	fn_logecho "You chose to ${command} transmission-daemon for ${username}"
-	sleep 2
+	sleep 1
 }
 
 # Checks that everything is allright before starting
@@ -250,9 +258,8 @@ fn_stop_transmission(){
 
 fn_check_previously_installed(){
 	if [ -f "${tuprocesspath}" ]; then
-		fn_logecho "[WARNING] ${tuprocess} was found!"
-		fn_logecho "Do you wish to autoclean the old transmission from ${username}?"
-		fn_logecho "Info! This will remove any torrent and transmission settings."
+		fn_logecho "[ INFO ] ${tuprocess} was found!"
+		fn_logecho "Autoclean the old transmission from ${username}?"
 		while true; do
 			read -e -p "Continue? [y/n]" yn
 			case $yn in
@@ -261,14 +268,13 @@ fn_check_previously_installed(){
 			* ) echo "Please answer yes or no.";;
 			esac
 		done
-		echo ""
 		if [ "${cleanoldtransmission}" == "yes" ]; then
 			fn_logecho "Removing user ${username} from group ${tservice}..."
 			deluser "${username}" "${tservice}"
 			fn_logecho "[ ok ] User is not a part of ${tservice} anymore!"
 			fn_logecho "Removing ${tuprocess} files..."
 			rm -R "${bindir:?}/${tuprocess:?}" "${initdir:?}/${tuprocess:?}" "${libdir:?}/${tuprocess:?}" "${etcdir:?}/${tuprocess:?}" "${defdir:?}/${tuprocess:?}"
-			fn_logecho "[ ok ] files removed!"
+			fn_logecho "[ ok ] ${tuprocess} files removed!"
 			fn_logecho "Removing ${tuprocess} from rc.d..."
 			update-rc.d "${tuprocess}" remove
 			fn_logecho "[ ok ] Process cleared from rc.d!"
@@ -287,70 +293,67 @@ fn_check_user_exists(){
 }
 
 # Prompts for removing an existing user
-fn_remove_user(){
+fn_remove_user_exists(){
+	fn_check_user_exists
 	if [ "${userexists}" == "1" ]; then
-		if [ -d "${userdir}" ]; then
-			fn_logecho "Info! ${username} already exists"
-			fn_logecho "Do you wish to entirely remove the user and its home directory?"
-			fn_logecho "[WARNING] Any file in ${userdir} will be lost!"
-			while true; do
-				read -e -p "Continue? [y/n]" yn
-				case $yn in
-					[Yy]* ) echo "Let's go!"; cleanuser="yes"; break;;
-					[Nn]* ) echo "Aborting!"; cleanuser="no", break;;
-				* ) echo "Please answer yes or no.";;
-				esac
-			done
-			if [ "${cleanuser}" == "yes" ]; then
-				fn_logecho "Closing ${username} processes"
-				killall -KILL -u "${username}"
-				fn_logecho "[ ok ] Closed processes"
-				fn_logecho "Removing user: ${username} and its home: ${userdir}"
-				userdel -r "${username}"
-				fn_logecho "[ ok ] Removed previous ${username} and its home directory"
-				if [ -f "/etc/apache2/conf-enabled${apachealias}/${username}" ]; then
-					fn_logecho "Removing apache2 alias: ${apachealias}/${username}"
-					rm "/etc/apache2/conf-enabled${apachealias}/${username}"
-					fn_logecho "Reloading apache2"
-					service apache2 reload
-				fi
+		fn_logecho "Info! ${username} already exists"
+		fn_logecho "Do you wish to entirely remove the user and its home directory?"
+		fn_logecho "[WARNING] Any file in ${userdir} will be lost!"
+		while true; do
+			read -e -p "Continue? [y/n]" yn
+			case $yn in
+				[Yy]* ) echo "Let's go!"; cleanuser="yes"; break;;
+				[Nn]* ) echo "Aborting!"; cleanuser="no", break;;
+			* ) echo "Please answer yes or no.";;
+			esac
+		done
+		if [ "${cleanuser}" == "yes" ]; then
+			fn_logecho "Closing ${username} processes"
+			killall -KILL -u "${username}"
+			fn_logecho "[ ok ] Closed processes"
+			fn_logecho "Removing user: ${username} and its transmission home: ${userdir}"
+			userdel "${username}"
+			fn_logecho "[ ok ] Removed previous ${username}"
+			if [ -d "${userdir}" ]; then
+				fn_logecho "Removing user home directory"
+				rm -rf "${userdir:?}"
+				fn_logecho "[ OK ] Removed ${userdir}"
+			fi
+			if [ -f "/etc/apache2/conf-enabled${apachealias}/${username}" ]; then
+				fn_logecho "Removing apache2 alias: ${apachealias}/${username}"
+				rm "/etc/apache2/conf-enabled${apachealias}/${username}"
+				fn_logecho "Reloading apache2"
+				service apache2 reload
 			fi
 		fi
+	else
+		fn_logecho "Info! Linux user: ${username} does not exist"	
 	fi
 }
 
 fn_create_user(){
-	if [ "${userexists}" == 1 ]; then
-		fn_remove_user
+	fn_remove_user_exists
+	fn_logecho "Home direcotry for this user set to dir: ${userdir}"
+	fn_logecho "Create new transmission server for user: ${username}?"
+	fn_prompt_continue_y
+	# Adding user
+	if [ ! -d ${sbdirectories} ]; then
+		fn_logecho "Creating seedbox directory ${sbdirectories}..."
+		mkdir -p "${sbdirectories}"
+	else
+		fn_logecho "[WARNING] Seedbox directory already exists: ${sbdirectories}"
 	fi
-	if [ "${userexists}" == "0" ]||[ "${cleanuser}" == "1" ]; then
-		fn_logecho "Info! ${username} doesn't exist"
-		fn_logecho "Home direcotry for this user set to dir: ${userdir}"
-		fn_logecho "Create new transmission server for user: ${username}?"
-		fn_prompt_continue_y
-		# Adding user
-		if [ ! -d ${sbdirectories} ]; then
-			fn_logecho "creating ${sbdirectories}..."
-			mkdir -p "${sbdirectories}"
-		fi
-		fn_logecho "Creating ${username}...."
-		useradd -m -d "${userdir}" "${username}"
-		fn_logecho "Default shell ${usershell} for ${username}"
-		usermod -s "${usershell}" "${username}"
-		# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
-		fn_logecho "Adding user ${username} to group ${tservice}..."
-		fn_logecho "Info! It fixes permission issues but allows this user to access other files from the group and reciprocally"
-		usermod -a -G "${tservice}" "${username}"
-		fn_logecho "[ ok ] User created"
-		while [ -z "${userpassword}" ]; do
-			fn_logecho "Info! Please, set the user password for RPC, SSH and FTP"
-			fn_logecho "Warning! No confirmation"
-			fn_logecho "${username} password:"
-			read -rs userpassword
-		done
-		fn_logecho "Applying password to user: ${username}:"
-		echo -e "${userpassword}\n${userpassword}" | passwd "${username}"
-	fi
+	fn_logecho "Creating ${username}...."
+	useradd -m -d "${userdir}" "${username}"
+	fn_logecho "Default shell ${usershell} for ${username}"
+	usermod -s "${usershell}" "${username}"
+	# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
+	fn_logecho "Adding user ${username} to group ${tservice}..."
+	fn_logecho "Info! It fixes permission issues but allows this user to access other files from the group and reciprocally"
+	usermod -a -G "${tservice}" "${username}"
+	fn_logecho "[ ok ] User created"
+	fn_logecho "Applying password to user: ${username}:"
+	echo -e "${userpassword}\n${userpassword}" | passwd "${username}"
 }
 
 fn_user_dirs(){
@@ -395,17 +398,15 @@ fn_transmission_duplicate(){
 	fn_logecho "[ ok ] ${tuprocess} duplicated!"
 }
 
-# Generate config file
-fn_create_config(){
-	fn_logecho "Please, set a listening IP (leave empty for default 0.0.0.0)"
-	fn_logecho "IP:"
+# Set config
+fn_set_config(){
+	fn_logecho "1/3 Please, set a listening IP: (leave empty for default 0.0.0.0)"
 	read -r ip
 	if [ -z "${ip}" ]; then
 		ip="0.0.0.0"
 	fi
 	fn_logecho "IP set to: ${ip}"
-	fn_logecho "Please, set an RPC port (leave empty for default 9091)"
-	fn_logecho "RPC port:"
+	fn_logecho "2/3 Please, set an RPC port: (leave empty for default 9091)"
 	read -r trpcport
 	if [ -z "${trpcport}" ]; then
 		trpcport="9091"
@@ -415,6 +416,15 @@ fn_create_config(){
 	if [ ! -d "${etcdir}/${tuprocess}" ]; then
 		fn_sorry_exit
 	fi
+	while [ -z "${userpassword}" ]; do
+		fn_logecho "3/3 Please, set the user password for RPC, SSH and FTP"
+		fn_logecho "Warning! No confirmation"
+		fn_logecho "${username} password:"
+		read -rs userpassword
+	done
+}
+
+fn_write_config(){
 	# Check if config file exists, inform if it doesn't since it's not normal
 	if [ ! -f "${tuconfig}" ]; then
 		fn_logecho "Info! No config file was found in ${etcdir}/${tuprocess}"
@@ -619,7 +629,6 @@ fn_control_instance(){
 	fi
 }
 
-fn_check_root
 if [ "${command}" == "details" ]; then
 	fn_details
 elif [ "${command}" == "start" ]||[ "${command}" == "stop" ]||[ "${command}" == "restart" ]; then
@@ -630,11 +639,11 @@ elif [ "${command}" == "deploy" ]; then
 	fn_prompt_continue_y
 	fn_stop_transmission
 	fn_check_previously_installed
-	fn_check_user_exists
+	fn_set_config
 	fn_create_user
 	fn_user_dirs
 	fn_transmission_duplicate
-	fn_create_config
+	fn_write_config
 	fn_config_extra
 	fn_setup_complete
 elif [ "${command}" == "remove" ]; then
@@ -643,7 +652,6 @@ elif [ "${command}" == "remove" ]; then
 	fn_welcome
 	fn_stop_transmission
 	fn_check_previously_installed
-	fn_check_user_exists
-	fn_remove_user
+	fn_remove_user_exists
 	fn_remove_complete
 fi
