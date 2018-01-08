@@ -1,6 +1,6 @@
 # transmission-deployer
 Deploy and manage multiple transmission-daemons in Debian based distros.  
-Tested on Debian 8.7, should also work with Ubuntu.  
+Tested on Debian 8 & 9, should also work with Ubuntu.  
 
 The default directory structure is:  
 ````bash
