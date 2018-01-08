@@ -182,7 +182,7 @@ root@webserver:~/deployscripts# ./transmission-deployer details all
 ######## Seedbox details ########
 #################################
 ########
-User: noobettz
+User: blah
 RPC Port: 9097
 Disk Usage: 28K
 Downloads count: 1
@@ -191,7 +191,7 @@ In Transmission: 0
 
 
 ########
-User: gibson45
+User: damn
 RPC Port: 9095
 Disk Usage: 197G
 Downloads count: 31
@@ -209,7 +209,7 @@ In Transmission: 10
 
 
 ########
-User: lutra
+User: loutre
 RPC Port: 9096
 Disk Usage: 179G
 Downloads count: 32
@@ -227,7 +227,7 @@ In Transmission: 0
 
 
 ########
-User: ultisb
+User: ultimatebyte
 RPC Port: 9094
 Disk Usage: 328G
 Downloads count: 77
@@ -236,7 +236,7 @@ In Transmission: 72
 
 
 ########
-User: aatys
+User: prout
 RPC Port: 9092
 Disk Usage: 982G
 Downloads count: 1
