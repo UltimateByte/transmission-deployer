@@ -378,7 +378,7 @@ fn_user_dirs(){
 	sleep 1
 	chown "${username}":"${tservice}" "${userdir}"
 	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
-	chmod 775 "${sbdirectories}"
+	chmod 755 "${sbdirectories}"
 	chmod -R ${chmodvalue} "${userdir}"
 	fn_logecho "[ ok ] Proper permissions applied!"
 }
