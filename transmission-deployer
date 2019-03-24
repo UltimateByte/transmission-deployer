@@ -1,9 +1,9 @@
 #!/bin/bash
 # Multiple transmission-daemon deployer
-# Authors: UltimateByte
-# Website: https://www.terageek.org
+# Author: UltimateByte
+# Website: https://terageek.org
 # Description: Creates and manages multiple transmission-daemon instances
-# Version: 1.0
+# Version: 1.1
 
 ### SETTINGS ###
 
@@ -384,18 +384,30 @@ fn_user_dirs(){
 	fn_logecho "[ ok ] Proper permissions applied!"
 }
 
+fn_daemon_dirs(){
+	fn_logecho "Creating user transmission program data directories..."
+	mkdir -Pv "${libdir}/${tuprocess}"
+	mkdir -Pv "${libdir}/${tuprocess}.config/transmission-daemon/blocklists/"
+	mkdir -Pv "${libdir}/${tuprocess}.config/transmission-daemon/resume/"
+	mkdir -Pv "${libdir}/${tuprocess}.config/transmission-daemon/torrents/"
+	mkdir -Pv "${libdir}/${tuprocess}.downloads"
+	ln -s "${libdir}/${tuprocess}.config/transmission-daemon/" "${libdir}/${tuprocess}/info/"
+	touch "${tuconfig}"
+	ln -vsf "${tuconfig}" "${utlibconfig}"
+	chown -R ${user}:${user} "${libdir}/${tuprocess}" "${libdir}/${tuprocess}/info/"
+	fn_logecho "[ ok ] User transmission program data directories created."
+}
+
 ### Dev notes
 # https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
 # cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2
 # cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2
-# cp -a /var/lib/transmission-daemon /var/lib/transmission-daemon2
 # cp -a /etc/transmission-daemon /etc/transmission-daemon2
 
 fn_transmission_duplicate(){
 	fn_logecho "Duplicating ${deftransmission} to ${tuprocess}..."
 	cp "${bindir}/${deftransmission}" "${bindir}/${tuprocess}"
 	cp "${initdir}/${deftransmission}" "${initdir}/${tuprocess}"
-	cp -a "${libdir}/${deftransmission}" "${libdir}/${tuprocess}"
 	cp -a "${etcdir}/${deftransmission}" "${etcdir}/${tuprocess}"
 	cp "${defdir}/${deftransmission}" "${defdir}/${tuprocess}"
 	# A little check
@@ -513,24 +525,19 @@ fn_write_config(){
 	\"upload-slots-per-torrent\": 50,
 	\"utp-enabled\": true
 	}" > "${tuconfig}"
-
-	echo "Symlinking config file"
-	ln -vsf "${tuconfig}" "${utlibconfig}"
+	
+	# Never too cautious about ownership
+	chown ${user}:${user} "${tuconfig}" "${utlibconfig}"
 }
 
 
 fn_config_extra(){
-	fn_logecho "Adjusting ${initdir}/${tuprocess} to fit user..."
+	fn_logecho "Correcting ${initdir}/${tuprocess} to fit user..."
 	# Replace default transmission process name ocurrences by user transmission process name
 	sed -i "s/${deftransmission}/${tuprocess}/g" "${initdir}/${tuprocess}"
 	# Run process as user instead of default debian-transmission 
 	sed -i "s/USER=${tservice}/USER=${username}/g" "${initdir}/${tuprocess}"
-	# Correct permissions to fit user
-	fn_logecho "Adjusting permissions to fit user..."
-	# User home and /var/lib/transmission-daemon-user/info/
-	chown -R ${user}:${user} "${userdir}" "${ucfgdir}"
-	# Config files
-	chown ${user}:${user} "${tuconfig}" "${utlibconfig}"
+	fn_logecho "[ ok ] ${initdir}/${tuprocess} set for ${username}."
 	fn_logecho "[ ok ] New process now fits user!"
 	# Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader/info
 	fn_logecho "Updating config location info"
@@ -652,6 +659,7 @@ elif [ "${command}" == "deploy" ]; then
 	fn_stop_transmission
 	fn_create_user
 	fn_user_dirs
+	fn_daemon_dirs
 	fn_transmission_duplicate
 	fn_write_config
 	fn_config_extra
