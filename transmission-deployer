@@ -390,7 +390,7 @@ fn_daemon_dirs(){
 	mkdir -pv "${libdir}/${tuprocess}/.config/transmission-daemon/blocklists/"
 	mkdir -pv "${libdir}/${tuprocess}/.config/transmission-daemon/resume/"
 	mkdir -pv "${libdir}/${tuprocess}/.config/transmission-daemon/torrents/"
-	mkdir -pv "${libdir}/${tuprocess}/.downloads"
+	mkdir -pv "${libdir}/${tuprocess}/downloads"
 	mkdir -pv "${etcdir}/${tuprocess}"
 	ln -s "${libdir}/${tuprocess}/.config/transmission-daemon/" "${libdir}/${tuprocess}/info"
 	touch "${tuconfig}"
