@@ -14,14 +14,15 @@
 # Home directory for users
 homedir="/home"
 # Seedboxes directory (optional)
-sbdir="/seedboxes" # Start with a / since it's a subdir or strip it if unused
+sbdir="" # Leave blank if unused, or start with a "/" since it's a subdir
 
 ## Transmission default settings
 
 # What IP to listen to
 # 0.0.0.0 binds to all available IPs
-# If left unset, you will be prompted for an IP for every installation
-defaultip=""
+# If having multiple IPs, you'd probably better chose one
+# If unset, you will be prompted for an IP for every installation
+defaultip="0.0.0.0"
 
 ## Permissions
 
@@ -36,8 +37,11 @@ userumask="2"
 
 ## Extra configuration
 
-# Apache2 alias /apachealias/username (start with /)
-apachealias="/dl"
+# Apache2 alias 
+# This allows users to access their downloads using a web link 
+# Leave it empty for https://yourdomain.tld/username
+# Or add "/example" for https://yourdomain.tld/example/username
+apachealias=""
 
 #############
 ## Program ##
@@ -354,10 +358,6 @@ fn_create_user(){
 	useradd -m -d "${userdir}" "${username}"
 	fn_logecho "Default shell ${usershell} for ${username}"
 	usermod -s "${usershell}" "${username}"
-	# Doc http://askubuntu.com/questions/221081/permission-denied-when-downloading-with-transmission-deamon
-	fn_logecho "Adding user ${username} to group ${tservice}..."
-	fn_logecho "Info! It fixes permission issues but allows this user to access other files from the group and reciprocally"
-	usermod -a -G "${tservice}" "${username}"
 	fn_logecho "[ ok ] User created"
 	fn_logecho "Applying password to user: ${username}:"
 	echo -e "${userpassword}\n${userpassword}" | passwd "${username}"
@@ -376,8 +376,9 @@ fn_user_dirs(){
 	fn_logecho "[ ok ] Directories created!"
 	fn_logecho "Applying permissions..."
 	sleep 1
-	chown "${username}":"${tservice}" "${userdir}"
-	chown -R "${username}":"${tservice}" "${downloadsdir}" "${incompletedir}"
+	
+	chown "${username}":"${username}" "${userdir}"
+	chown -R "${username}":"${username}" "${downloadsdir}" "${incompletedir}"
 	chmod 755 "${sbdirectories}"
 	chmod -R ${chmodvalue} "${userdir}"
 	fn_logecho "[ ok ] Proper permissions applied!"
@@ -522,8 +523,16 @@ fn_config_extra(){
 	fn_logecho "Adjusting ${initdir}/${tuprocess} to fit user..."
 	# Replace default transmission process name ocurrences by user transmission process name
 	sed -i "s/${deftransmission}/${tuprocess}/g" "${initdir}/${tuprocess}"
+	# Run process as user instead of default debian-transmission 
+	sed -i "s/USER=${tservice}/USER=${username}/g" "${initdir}/${tuprocess}"
+	# Correct permissions to fit user
+	fn_logecho "Adjusting permissions to fit user..."
+	# User home and /var/lib/transmission-daemon-user/info/
+	chown -R ${user}:${user} "${userdir}" "${ucfgdir}"
+	# Config files
+	chown ${user}:${user} "${tuconfig}" "${utlibconfig}"
 	fn_logecho "[ ok ] New process now fits user!"
-	# Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader
+	# Replace CONFIG_DIR="/var/lib/transmission-daemon/info" in File: /etc/default/transmission-daemon-downloader/info
 	fn_logecho "Updating config location info"
 	sed -i "s@${tdefcfgdir}@${ucfgdir}@g" "${udefdir}"
 	fn_logecho "[ ok ] Config location info updated!"
