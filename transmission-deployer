@@ -386,11 +386,11 @@ fn_user_dirs(){
 
 fn_daemon_dirs(){
 	fn_logecho "Creating user transmission program data directories..."
-	mkdir -Pv "${libdir}/${tuprocess}"
-	mkdir -Pv "${libdir}/${tuprocess}.config/transmission-daemon/blocklists/"
-	mkdir -Pv "${libdir}/${tuprocess}.config/transmission-daemon/resume/"
-	mkdir -Pv "${libdir}/${tuprocess}.config/transmission-daemon/torrents/"
-	mkdir -Pv "${libdir}/${tuprocess}.downloads"
+	mkdir -pv "${libdir}/${tuprocess}"
+	mkdir -pv "${libdir}/${tuprocess}.config/transmission-daemon/blocklists/"
+	mkdir -pv "${libdir}/${tuprocess}.config/transmission-daemon/resume/"
+	mkdir -pv "${libdir}/${tuprocess}.config/transmission-daemon/torrents/"
+	mkdir -pv "${libdir}/${tuprocess}.downloads"
 	ln -s "${libdir}/${tuprocess}.config/transmission-daemon/" "${libdir}/${tuprocess}/info/"
 	touch "${tuconfig}"
 	ln -vsf "${tuconfig}" "${utlibconfig}"
