@@ -391,7 +391,8 @@ fn_daemon_dirs(){
 	mkdir -pv "${libdir}/${tuprocess}/.config/transmission-daemon/resume/"
 	mkdir -pv "${libdir}/${tuprocess}/.config/transmission-daemon/torrents/"
 	mkdir -pv "${libdir}/${tuprocess}/.downloads"
-	ln -s "${libdir}/${tuprocess}/.config/transmission-daemon/" "${libdir}/${tuprocess}/info/"
+	mkdir -pv "${etcdir}/${tuprocess}"
+	ln -s "${libdir}/${tuprocess}/.config/transmission-daemon/" "${libdir}/${tuprocess}/info"
 	touch "${tuconfig}"
 	ln -vsf "${tuconfig}" "${utlibconfig}"
 	chown -R ${user}:${user} "${libdir}/${tuprocess}" "${libdir}/${tuprocess}/info/"
@@ -402,13 +403,11 @@ fn_daemon_dirs(){
 # https://fr.scribd.com/doc/242365178/How-to-Run-Multiple-Instances-of-Transmission-Daemon-in-Linux-Debian-or-Ubuntu
 # cp /usr/bin/transmission-daemon /usr/bin/transmission-daemon2
 # cp /etc/init.d/transmission-daemon /etc/init.d/transmission-daemon2
-# cp -a /etc/transmission-daemon /etc/transmission-daemon2
 
 fn_transmission_duplicate(){
 	fn_logecho "Duplicating ${deftransmission} to ${tuprocess}..."
 	cp "${bindir}/${deftransmission}" "${bindir}/${tuprocess}"
 	cp "${initdir}/${deftransmission}" "${initdir}/${tuprocess}"
-	cp -a "${etcdir}/${deftransmission}" "${etcdir}/${tuprocess}"
 	cp "${defdir}/${deftransmission}" "${defdir}/${tuprocess}"
 	# A little check
 	if [ ! -d "${etcdir}/${tuprocess}" ]; then
