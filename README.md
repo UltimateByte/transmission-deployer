@@ -1,16 +1,10 @@
 # transmission-deployer
 Deploy and manage multiple transmission-daemons in Debian based distros.  
-Tested on Debian 8 & 9, should also work with Ubuntu.  
+Tested on Debian 8 & 9, should also work with Ubuntu. 
 
-The default directory structure is:  
-````bash
-/home/username/
-/home/username/downloads
-/home/username/downloads/.htacces
-/home/username/incomplete
-/etc/transmission-daemon-username
-/var/lib/transmission-daemon-username
-````
+## NEW! (25 Mar 2019)
+Now runs as a separate user for each instance.
+
 ### Requirements
 * Have a Debian based distro
 * Have transmission-daemon installed 
@@ -56,7 +50,20 @@ Example
 ./transmission-deployer deploy downloader
 ````
 
-### Wishlist/Devlist
+## Good to know
+
+The default directory structure is:  
+````bash
+/home/username/
+/home/username/downloads
+/home/username/downloads/.htacces
+/home/username/incomplete
+/etc/transmission-daemon-username
+/var/lib/transmission-daemon-username
+````
+
+
+## Wishlist/Devlist
 * Be more versatile if user changed default transmission-daemon
 * Add a check to know if default transmission-daemon is started or not (for now it will always close it before the process then restart it after the process)
 * Check if ports are in use
