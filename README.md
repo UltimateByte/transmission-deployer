@@ -35,7 +35,7 @@ The default directory structure is:
 Download the script and make it executable 
 ````bash
 wget https://raw.githubusercontent.com/UltimateByte/transmission-deployer/master/transmission-deployer
-chmod +x transmsion-deployer
+chmod +x transmssion-deployer
 ````
 
 Edit home directory and default user shell if needed
