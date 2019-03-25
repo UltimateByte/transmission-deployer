@@ -395,7 +395,7 @@ fn_daemon_dirs(){
 	ln -s "${libdir}/${tuprocess}/.config/transmission-daemon/" "${libdir}/${tuprocess}/info"
 	touch "${tuconfig}"
 	ln -vsf "${tuconfig}" "${utlibconfig}"
-	chown -R ${user}:${user} "${libdir}/${tuprocess}" "${libdir}/${tuprocess}/info/"
+	chown -R ${username}:${username} "${libdir}/${tuprocess}" "${libdir}/${tuprocess}/info"
 	fn_logecho "[ ok ] User transmission program data directories created."
 }
 
