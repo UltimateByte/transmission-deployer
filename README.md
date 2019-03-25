@@ -4,10 +4,10 @@ Tested on Debian 8 & 9, should also work with Ubuntu.
 
 The default directory structure is:  
 ````bash
-/home/seedboxes/username/
-/home/seedboxes/username/downloads
-/home/seedboxes/username/downloads/.htacces
-/home/seedboxes/username/incomplete
+/home/username/
+/home/username/downloads
+/home/username/downloads/.htacces
+/home/username/incomplete
 /etc/transmission-daemon-username
 /var/lib/transmission-daemon-username
 ````
@@ -21,25 +21,23 @@ The default directory structure is:
 * Creates a new user
 * Asks for RPC info (port & password)
 * Creates download and incomplete directories with correct permissions
-* Adds the user to debian-transmission group
 * Duplicates original transmission-daemon to a new one corresponding to the corresponding transmission-daemon-user
 * Edits all required files
 * Allows the process to be started and started upon boot
-* Creates a .htaccess file in downloads dir if you plan to use userdir apache2 mod
+* Shares download dirs using userdir apache2 mod
+* Creates a .htaccess file in downloads dir
 * Completes the install and gives you relevant connexion info
 * You can display information about an already installed transmission instance
 
 ## Usage  
 #### Requires elevated privileges
 
-Download the script  
+Download the script and make it executable 
 ````bash
 wget https://raw.githubusercontent.com/UltimateByte/transmission-deployer/master/transmission-deployer
-````
-Make it executable  
-````bash
 chmod +x transmsion-deployer
 ````
+
 Edit home directory and default user shell if needed
 ````bash
 nano transmsion-deployer
