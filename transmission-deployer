@@ -296,7 +296,7 @@ fn_check_previously_installed(){
 
 # Check if user exists, returns userexists=0/1
 fn_check_user_exists(){
-	if [ "$(grep "${username}" /etc/passwd)" ]; then
+	if [ "$(grep "${username}:" /etc/passwd)" ]; then
 		userexists="1"
 	else
 		userexists="0"
