@@ -35,6 +35,14 @@ chmodvalue="775"
 # Umask 7 leads to chmod 770 files (rwx rwx ---)
 userumask="2"
 
+## Quota
+
+# Quota uses ext4 image files mounted as home user directories
+# Files are not filled, so creating the image or expading the image is fast, but the space is allocated
+
+# User directories image files location
+quotafsdir="/quotafs"
+
 ## Extra configuration
 
 # Apache2 alias 
@@ -69,6 +77,7 @@ fn_usage(){
 	fn_echo "Usage: ./${selfname} [command] [username]"
 	fn_echo "Available commands:"
 	fn_echo " * deploy [username] - Deploy a new seedbox instance"
+	fn_echo " * quota [username] - Deploy a new seedbox instance"
 	fn_echo " * remove [username] - Remove an existing seedbox instance & user"
 	fn_echo " * details [username/all] - Get details about one or all instances"
 	fn_echo " * start/stop/restart [username/all] - Start/stop/restart one or all instances"
@@ -94,6 +103,8 @@ fi
 # Set command to something relevant
 if [ "$1" == "deploy" ]; then
 	command="deploy"
+elif [ "$1" == "quota" ]; then
+	command="quota"
 elif [ "$1" == "remove" ]; then
 	command="remove"
 elif [ "$1" == details ]; then
@@ -621,9 +632,61 @@ fn_details(){
 	fi
 }
 
+# Set quota for a user
+fn_quota(){
+	if [ ! -d "${userdir}" ]; then
+		fn_logecho "[ERROR] Cannot find ${userdir}"
+		exit
+	elif [ -f "${quotafsdir}/${username}.ext4" ]; then
+		fn_logecho "User image already exists, not supported yet"
+		exit
+	fi
+	fn_logecho "You are about to setup a quota by file image in ${quotafsdir} for user ${username}"
+	fn_echo "Note: you should have backed up any important data first!"
+	fn_prompt_continue_y
+	if [ ! -d "${quotafsdir}" ]; then
+		fn_logecho "Creating ${quotafsdir}"
+		mkdir -pv "${quotafsdir}"
+	fi
+	fn_logecho "Please, input the desired quota, including units:"
+	fn_echo "Example: 800M"
+	fn_echo "Example: 250G"
+	fn_echo "Example: 1T"
+	read -r quotainput
+	if [ -n "$(mount | grep ${userdir})" ]; then
+		fn_logecho "User directory already mounted, unmounting"
+		umount "${userdir}"
+	fi
+	# Change file allocation
+	fn_logecho "Allocating ${quotainput}"
+	fallocate -l "${quotainput}" "${quotafsdir}/${username}.ext4"
+	# Create filesystem
+	fn_logecho "Creating filesystem in ${quotafsdir}/${username}.ext4"
+	mkfs -t ext4 -q "${quotafsdir}/${username}.ext4" -F
+	# Check for errors on filesystem
+	e2fsck -f -y "${quotafsdir}/${username}.ext4"
+	# Disable reserved space for this filesystem
+	fn_logecho "Disable reserved percentage space"
+	tune2fs -m 0 "${quotafsdir}/${username}.ext4"
+	# Save mount
+	echo "${quotafsdir}/${username}.ext4  ${userdir}  ext4  defaults,noatime,errors=remount-ro  0  1" >> /etc/fstab
+	# Move files to tmp dir
+	mv "${userdir}" "bak.${userdir}"
+	mkdir "${userdir}"
+	mount "${userdir}"
+	mv "bak.${userdir}/." "${userdir}"
+	fn_echo "Now open a new SSH prompt, check that bak.${userdir} is empty, and ${userdir} contains your data.
+	If everything is allright, then hit enter to continue"
+	fn_prompt_continue_y
+	rm -r "bak.${userdir:?}"
+	fn_logecho "Quota all set! You might want to start back the instance."
+	exit
+}
+
 # Append a start/stop/restart command to a transmission instance
 fn_append_command(){
 	fn_logecho "Command: ${command} ${username} instance"
+	
 	"${tuprocesspath}" "${command}"
 	fn_logecho "[OK] ${command} ${username}"
 }
@@ -663,6 +726,10 @@ elif [ "${command}" == "deploy" ]; then
 	fn_write_config
 	fn_config_extra
 	fn_setup_complete
+elif [ "${command}" == "quota" ]; then
+	fn_check
+	fn_stop_transmission
+	fn_quota
 elif [ "${command}" == "remove" ]; then
 	fn_check
 	fn_welcome
