@@ -45,8 +45,8 @@ quotafsdir="/quotafs"
 
 ## Extra configuration
 
-# Apache2 alias 
-# This allows users to access their downloads using a web link 
+# Apache2 alias
+# This allows users to access their downloads using a web link
 # Leave it empty for https://yourdomain.tld/username
 # Or add "/example" for https://yourdomain.tld/example/username
 apachealias=""
@@ -681,14 +681,15 @@ fn_quota(){
 	mv "${userdir}" "${sbdirectories}/bak.${username}"
 	# Create a new home
 	mkdir "${userdir}"
-	Mount the home already
+	# Mount the home already
 	mount "${userdir}"
-	mv -ra "${sbdirectories}/bak.${username}/." "${userdir}"
+	fn_logecho "Moving user content to new quota image file."
+	mv "${sbdirectories}/bak.${username}/." "${userdir}"
 	if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
-		fn_logetcho "Cleaning old empty home"
+		fn_logecho "Cleaning old empty home"
 		rm -r "bak.${userdir:?}"
 	else
-		fn_logetcho "[ERROR] User's old home is not empty. Check what's going on!"
+		fn_logecho "[ERROR] User's old home is not empty. Check what's going on!"
 		exit
 	fi
 	fn_logecho "Quota is set!"
