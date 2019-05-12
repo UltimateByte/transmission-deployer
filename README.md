@@ -2,8 +2,12 @@
 Deploy and manage multiple transmission-daemons in Debian based distros.  
 Tested on Debian 8 & 9, should also work with Ubuntu. 
 
-## NEW! (25 Mar 2019)
-Now runs as a separate user for each instance.
+# Changelog
+### 12 May 2019
+* Now supports quota (adding, changing)
+* Added migration from remote server functionnality
+### 25 Mar 2019
+* Now runs as a separate user for each instance.
 
 ### Requirements
 * Have a Debian based distro
