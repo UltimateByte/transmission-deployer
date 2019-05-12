@@ -11,8 +11,9 @@ Tested on Debian 8 & 9, should also work with Ubuntu.
 
 ### Requirements
 * Have a Debian based distro
-* Have transmission-daemon installed 
+* Have transmission-daemon installed
 * Have the default transmission-daemon unchanged and unused
+* Optional: Have Apache installed for web access to your torrents
  
 ### What it does
 * Checks your current installation
