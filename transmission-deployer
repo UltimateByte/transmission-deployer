@@ -601,7 +601,7 @@ fn_remove_complete(){
 }
 
 fn_details_process(){
-	fn_logecho "########"
+	echo ""
 	fn_logecho "User: ${seedboxinfo}"
 	fn_logecho "Bind Address IPV4: $(cat "${etcdir}/${deftransmission}-${seedboxinfo}/${cfgfile}" | grep bind-address-ipv4 | awk -F " " '{print $2}' | awk -F "," '{print $1}')"
 	fn_logecho "RPC Bind Address: $(cat "${etcdir}/${deftransmission}-${seedboxinfo}/${cfgfile}" | grep rpc-bind-address | awk -F " " '{print $2}' | awk -F "," '{print $1}')"
