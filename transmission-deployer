@@ -649,6 +649,7 @@ fn_quota(){
 		fn_echo "Example: 800M"
 		fn_echo "Example: 250G"
 		fn_echo "Example: 1T"
+		fn_logecho "Current quota is $(ls -alh "${quotafsdir}/${username}.ext4" | awk '{print $5}')"
 		read -r quotainput
 		fn_logecho "Unmounting image"
 		umount "${userdir}"
