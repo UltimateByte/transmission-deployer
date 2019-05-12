@@ -637,66 +637,95 @@ fn_quota(){
 	if [ ! -d "${userdir}" ]; then
 		fn_logecho "[ERROR] Cannot find ${userdir}"
 		exit
+	# Quota already exists
 	elif [ -f "${quotafsdir}/${username}.ext4" ]; then
-		fn_logecho "User image already exists, not supported yet"
-		exit
-	fi
-	fn_logecho "You are about to setup a quota by file image in ${quotafsdir} for user ${username}"
-	fn_echo "Note: you should have backed up any important data first!"
-	fn_prompt_continue_y
-	if [ ! -d "${quotafsdir}" ]; then
-		fn_logecho "Creating ${quotafsdir}"
-		mkdir -pv "${quotafsdir}"
-	fi
-	if [ ! -d "${quotafsdir}" ]; then
-		fn_logetcho "[ RROR] Could not create ${quotafsdir}"
-		exit
-	fi
-	fn_logecho "Please, input the desired quota, including units:"
-	fn_echo "Example: 800M"
-	fn_echo "Example: 250G"
-	fn_echo "Example: 1T"
-	read -r quotainput
-	if [ -n "$(mount | grep ${userdir})" ]; then
-		fn_logecho "User directory already mounted, unmounting"
-		umount "${userdir}"
-	fi
-	# Change file allocation
-	fn_logecho "Allocating ${quotainput} to ${quotafsdir}/${username}.ext4"
-	fallocate -l "${quotainput}" "${quotafsdir}/${username}.ext4"
-	# Create filesystem
-	fn_logecho "Creating filesystem in ${quotafsdir}/${username}.ext4"
-	mkfs -t ext4 -q "${quotafsdir}/${username}.ext4" -F
-	# Check for errors on filesystem
-	fn_logecho "Checking for errors in file system"
-	e2fsck -f -y "${quotafsdir}/${username}.ext4"
-	# Disable reserved space for this filesystem
-	fn_logecho "Disable reserved percentage space"
-	tune2fs -m 0 "${quotafsdir}/${username}.ext4"
-	# Save mount
-	fn_logecho "Adding entry to fstab"
-	echo "${quotafsdir}/${username}.ext4  ${userdir}  ext4  defaults,noatime,errors=remount-ro  0  1" >> /etc/fstab
-	# Rename user home to "bak" dir
-	# We use the parent variable of $userdir in order to add the "bak" prefix to the dir name
-	mv "${userdir}" "${sbdirectories}/bak.${username}"
-	# Create a new home
-	mkdir "${userdir}"
-	# Mount the home already
-	mount "${userdir}"
-	fn_logecho "Moving user content to new quota image file."
-	# This should help moving hidden files as well
-	shopt -s dotglob
-	mv "${sbdirectories}/bak.${username}/"* "${userdir}"
-	if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
-		# Check if dir exists first, never too paranoid with recursive rm
-		if [ -d "${sbdirectories}/bak.${username}" ]; then
-			fn_logecho "Cleaning old empty home"
-			# Command will trigger an error if a variable is unset, preventing removing the root path
-			rm -r "${sbdirectories:?}/bak.${username:?}/"
+		fn_logecho "User image already exists"
+		if [ "$(df -h "${userdir}" | tail -n 1 | awk '{print $6}')" != "${userdir}" ]; then
+			fn_logecho "User image is not mounted as expected, exiting"
+			exit
 		fi
+		fn_logecho "User image appears mounted, going on"
+		fn_logecho "Please, input the desired quota, including units:"
+		fn_echo "Example: 800M"
+		fn_echo "Example: 250G"
+		fn_echo "Example: 1T"
+		read -r quotainput
+		fn_logecho "Unmounting image"
+		umount "${userdir}"
+		# Change file allocation
+		# If new value is higher than the previous one, it will take effect now.
+		# If new value is inferior than the previous one, we will ened to resize the FS first, and fallocate has no effect for now
+		fn_logecho "Allocating ${quotainput} to ${quotafsdir}/${username}.ext4"
+		fallocate -l "${quotainput}" "${quotafsdir}/${username}.ext4"
+		# Check for errors on filesystem
+		fn_logecho "Checking for errors in file system"
+		e2fsck -f -y "${quotafsdir}/${username}.ext4"
+		fn_logecho "Actually resizing filesystem (can take time if reducing size)"
+		resize2fs -p "${quotafsdir}/${username}.ext4" "${quotainput}"
+		fn_logecho "Checking for errors in file system again"
+		e2fsck -f -y "${quotafsdir}/${username}.ext4"
+		fn_logecho "Allocating again ${quotainput} to ${quotafsdir}/${username}.ext4"
+		fallocate -l "${quotainput}" "${quotafsdir}/${username}.ext4"
+		mount "${userdir}"
+	# Quota needs to be created
 	else
-		fn_logecho "[ERROR] User's old home is not empty. Check what's going on!"
-		exit
+		fn_logecho "You are about to setup a quota by file image in ${quotafsdir} for user ${username}"
+		fn_echo "Note: you should have backed up any important data first!"
+		fn_prompt_continue_y
+		if [ ! -d "${quotafsdir}" ]; then
+			fn_logecho "Creating ${quotafsdir}"
+			mkdir -pv "${quotafsdir}"
+		fi
+		if [ ! -d "${quotafsdir}" ]; then
+			fn_logetcho "[ RROR] Could not create ${quotafsdir}"
+			exit
+		fi
+		fn_logecho "Please, input the desired quota, including units:"
+		fn_echo "Example: 800M"
+		fn_echo "Example: 250G"
+		fn_echo "Example: 1T"
+		read -r quotainput
+		if [ -n "$(mount | grep ${userdir})" ]; then
+			fn_logecho "User directory already mounted, unmounting"
+			umount "${userdir}"
+		fi
+		# Change file allocation
+		fn_logecho "Allocating ${quotainput} to ${quotafsdir}/${username}.ext4"
+		fallocate -l "${quotainput}" "${quotafsdir}/${username}.ext4"
+		# Create filesystem
+		fn_logecho "Creating filesystem in ${quotafsdir}/${username}.ext4"
+		mkfs -t ext4 -q "${quotafsdir}/${username}.ext4" -F
+		# Check for errors on filesystem
+		fn_logecho "Checking for errors in file system"
+		e2fsck -f -y "${quotafsdir}/${username}.ext4"
+		# Disable reserved space for this filesystem
+		fn_logecho "Disable reserved percentage space"
+		tune2fs -m 0 "${quotafsdir}/${username}.ext4"
+		# Save mount
+		fn_logecho "Adding entry to fstab"
+		echo "${quotafsdir}/${username}.ext4  ${userdir}  ext4  defaults,noatime,errors=remount-ro  0  1" >> /etc/fstab
+		# Rename user home to "bak" dir
+		# We use the parent variable of $userdir in order to add the "bak" prefix to the dir name
+		mv "${userdir}" "${sbdirectories}/bak.${username}"
+		# Create a new home
+		mkdir "${userdir}"
+		# Mount the home already
+		mount "${userdir}"
+		fn_logecho "Moving user content to new quota image file."
+		# This should help moving hidden files as well
+		shopt -s dotglob
+		mv "${sbdirectories}/bak.${username}/"* "${userdir}"
+		if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
+			# Check if dir exists first, never too paranoid with recursive rm
+			if [ -d "${sbdirectories}/bak.${username}" ]; then
+				fn_logecho "Cleaning old empty home"
+				# Command will trigger an error if a variable is unset, preventing removing the root path
+				rm -r "${sbdirectories:?}/bak.${username:?}/"
+			fi
+		else
+			fn_logecho "[ERROR] User's old home is not empty. Check what's going on!"
+			exit
+		fi
 	fi
 	fn_logecho "Quota is set!"
 	fn_logecho "You can now start the daemon with:"
