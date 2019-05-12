@@ -81,6 +81,7 @@ fn_usage(){
 	fn_echo " * remove [username] - Remove an existing seedbox instance & user"
 	fn_echo " * details [username/all] - Get details about one or all instances"
 	fn_echo " * start/stop/restart [username/all] - Start/stop/restart one or all instances"
+	fn_echo " * migrate [username] - Migrate user torrents and transmission data from another server"
 	fn_echo "Example: ./${selfname} details jonsnow"
 	fn_echo "Example: ./${selfname} start all"
 }
@@ -115,6 +116,8 @@ elif [ "$1" == "stop" ]; then
 	command="stop"
 elif [ "$1" == "restart" ]; then
 	command="restart"
+elif [ "$1" == "migrate" ]; then
+	command="migrate"
 # And exit on invalid command
 else
 	fn_echo "[ERROR] Invalid command!"
@@ -651,6 +654,7 @@ fn_quota(){
 		fn_echo "Example: 1T"
 		fn_logecho "Current quota is $(ls -alh "${quotafsdir}/${username}.ext4" | awk '{print $5}')"
 		read -r quotainput
+		fn_stop_transmission
 		fn_logecho "Unmounting image"
 		umount "${userdir}"
 		# Change file allocation
@@ -686,6 +690,7 @@ fn_quota(){
 		fn_echo "Example: 250G"
 		fn_echo "Example: 1T"
 		read -r quotainput
+		fn_stop_transmission
 		if [ -n "$(mount | grep ${userdir})" ]; then
 			fn_logecho "User directory already mounted, unmounting"
 			umount "${userdir}"
@@ -759,6 +764,41 @@ fn_control_instance(){
 	fi
 }
 
+fn_migrate(){
+	if [ ! -d "${userdir}" ]; then
+		fn_logecho "[ERROR] Cannot find ${userdir}, you need to recreate the user first!"
+		exit
+	elif [ ! -f /root/.ssh/id_rsa.pub ]; then
+		fn_logecho "[ERROR] You forgot to create an SSH key, you sleepy head!"
+		fn_logecho " * First run: ssh-keygen -t rsa -C \"root@${hostname}\""
+		fn_logecho " * Then add the key in /root/.ssh/id_rsa.pub to /root/.ssh/authorized_keys on the remote server"
+		exit
+	else
+		fn_logecho "You are about to migrate $username here from another server"
+		fn_logecho "All torrents and Transmission data will be replaced on here"
+		fn_logecho "Config file is not copied over for practical reasons."
+		fn_logecho "File structure needs to be the same for practical reasons."
+		fn_echo "Make sure you authorizeed your SSH public key on the remote server!"
+		fn_prompt_continue_y
+		fn_logecho "Please input remote server hostname or IP to connect to:"
+		read -r remoteserver
+		fn_logecho "Copying user home directory"
+		rsync -avh --progress root@${remoteserver}:"${userdir}/" "${userdir}/"
+		fn_logecho "Copying transmission data"
+		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/blocklists/" ${libdir}/${tuprocess}/info/blocklists/"
+		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/torrents/" ${libdir}/${tuprocess}/info/torrents/"
+		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/resume/" ${libdir}/${tuprocess}/info/resume/"
+		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/dht.dat" ${libdir}/${tuprocess}/info/dht.dat"
+		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/stats.json" ${libdir}/${tuprocess}/info/stats.json"
+		fn_logecho "Correcting ownership"
+		find ${userdir} -exec chown ${username}:${username} {} \;
+		find "${libdir}/${tuprocess}/info/" -exec chown ${username}:${username} {} \;
+		fn_logecho "Migration done for ${username}!"
+		fn_logecho "You can now start the daemon with:"
+		fn_logecho "./${selfname} start ${username}"
+	fi
+}
+
 if [ "${command}" == "details" ]; then
 	fn_details
 elif [ "${command}" == "start" ]||[ "${command}" == "stop" ]||[ "${command}" == "restart" ]; then
@@ -779,7 +819,6 @@ elif [ "${command}" == "deploy" ]; then
 	fn_setup_complete
 elif [ "${command}" == "quota" ]; then
 	fn_check
-	fn_stop_transmission
 	fn_quota
 elif [ "${command}" == "remove" ]; then
 	fn_check
@@ -788,4 +827,8 @@ elif [ "${command}" == "remove" ]; then
 	fn_stop_transmission
 	fn_remove_user_exists
 	fn_remove_complete
+elif [ "${command}" == "migrate" ]; then
+	fn_check
+	fn_stop_transmission
+	fn_migrate
 fi
