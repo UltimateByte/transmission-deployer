@@ -684,11 +684,14 @@ fn_quota(){
 	# Mount the home already
 	mount "${userdir}"
 	fn_logecho "Moving user content to new quota image file."
-	mv "${sbdirectories}/bak.${username}/"* "${userdir}"
-	mv "${sbdirectories}/bak.${username}/".* "${userdir}"
+	mv "${sbdirectories}/bak.${username}/". "${userdir}"
 	if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
-		fn_logecho "Cleaning old empty home"
-		rm -r "bak.${userdir:?}"
+		# Check if dir exists first, never too paranoid with recursive rm
+		if [ -d "${sbdirectories}/bak.${username}" ]; then
+			fn_logecho "Cleaning old empty home"
+			# Command will trigger an error if a variable is unset, preventing removing the root path
+			rm -r "${sbdirectories:?}/bak.${username:?}/"
+		fi
 	else
 		fn_logecho "[ERROR] User's old home is not empty. Check what's going on!"
 		exit
