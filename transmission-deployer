@@ -77,7 +77,7 @@ fn_usage(){
 	fn_echo "Usage: ./${selfname} [command] [username]"
 	fn_echo "Available commands:"
 	fn_echo " * deploy [username] - Deploy a new seedbox instance"
-	fn_echo " * quota [username] - Deploy a new seedbox instance"
+	fn_echo " * quota [username] - Set quota for user"
 	fn_echo " * remove [username] - Remove an existing seedbox instance & user"
 	fn_echo " * details [username/all] - Get details about one or all instances"
 	fn_echo " * start/stop/restart [username/all] - Start/stop/restart one or all instances"
@@ -648,6 +648,10 @@ fn_quota(){
 		fn_logecho "Creating ${quotafsdir}"
 		mkdir -pv "${quotafsdir}"
 	fi
+	if [ ! -d "${quotafsdir}" ]; then
+		fn_logetcho "[ RROR] Could not create ${quotafsdir}"
+		exit
+	fi
 	fn_logecho "Please, input the desired quota, including units:"
 	fn_echo "Example: 800M"
 	fn_echo "Example: 250G"
@@ -658,28 +662,38 @@ fn_quota(){
 		umount "${userdir}"
 	fi
 	# Change file allocation
-	fn_logecho "Allocating ${quotainput}"
+	fn_logecho "Allocating ${quotainput} to ${quotafsdir}/${username}.ext4"
 	fallocate -l "${quotainput}" "${quotafsdir}/${username}.ext4"
 	# Create filesystem
 	fn_logecho "Creating filesystem in ${quotafsdir}/${username}.ext4"
 	mkfs -t ext4 -q "${quotafsdir}/${username}.ext4" -F
 	# Check for errors on filesystem
+	fn_logecho "Checking for errors in file system"
 	e2fsck -f -y "${quotafsdir}/${username}.ext4"
 	# Disable reserved space for this filesystem
 	fn_logecho "Disable reserved percentage space"
 	tune2fs -m 0 "${quotafsdir}/${username}.ext4"
 	# Save mount
+	fn_logecho "Adding entry to fstab"
 	echo "${quotafsdir}/${username}.ext4  ${userdir}  ext4  defaults,noatime,errors=remount-ro  0  1" >> /etc/fstab
-	# Move files to tmp dir
-	mv "${userdir}" "bak.${userdir}"
+	# Rename user home to "bak" dir
+	# We use the parent variable of $userdir in order to add the "bak" prefix to the dir name
+	mv "${userdir}" "${sbdirectories}/bak.${username}"
+	# Create a new home
 	mkdir "${userdir}"
+	Mount the home already
 	mount "${userdir}"
-	mv "bak.${userdir}/." "${userdir}"
-	fn_echo "Now open a new SSH prompt, check that bak.${userdir} is empty, and ${userdir} contains your data.
-	If everything is allright, then hit enter to continue"
-	fn_prompt_continue_y
-	rm -r "bak.${userdir:?}"
-	fn_logecho "Quota all set! You might want to start back the instance."
+	mv -ra "${sbdirectories}/bak.${username}/." "${userdir}"
+	if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
+		fn_logetcho "Cleaning old empty home"
+		rm -r "bak.${userdir:?}"
+	else
+		fn_logetcho "[ERROR] User's old home is not empty. Check what's going on!"
+		exit
+	fi
+	fn_logecho "Quota is set!"
+	fn_logecho "You can now start the daemon with:"
+	fn_logecho "./${selfname} start ${username}"
 	exit
 }
 
