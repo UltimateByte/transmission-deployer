@@ -684,7 +684,9 @@ fn_quota(){
 	# Mount the home already
 	mount "${userdir}"
 	fn_logecho "Moving user content to new quota image file."
-	mv "${sbdirectories}/bak.${username}/". "${userdir}"
+	# This should help moving hidden files as well
+	shopt -s dotglob
+	mv "${sbdirectories}/bak.${username}/"* "${userdir}"
 	if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
 		# Check if dir exists first, never too paranoid with recursive rm
 		if [ -d "${sbdirectories}/bak.${username}" ]; then
