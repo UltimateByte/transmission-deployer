@@ -684,7 +684,8 @@ fn_quota(){
 	# Mount the home already
 	mount "${userdir}"
 	fn_logecho "Moving user content to new quota image file."
-	mv "${sbdirectories}/bak.${username}/." "${userdir}"
+	mv "${sbdirectories}/bak.${username}/*" "${userdir}"
+	mv "${sbdirectories}/bak.${username}/.*" "${userdir}"
 	if [ -z "$(ls -A "${sbdirectories}/bak.${username}")" ]; then
 		fn_logecho "Cleaning old empty home"
 		rm -r "bak.${userdir:?}"
