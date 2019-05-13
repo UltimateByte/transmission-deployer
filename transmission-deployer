@@ -784,15 +784,15 @@ fn_migrate(){
 		read -r remoteserver
 		fn_logecho "Copying user home directory"
 		rsync -avh --progress root@${remoteserver}:"${userdir}/" "${userdir}/"
-		fn_logecho "Copying transmission data"
-		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/blocklists/" ${libdir}/${tuprocess}/info/blocklists/"
-		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/torrents/" ${libdir}/${tuprocess}/info/torrents/"
-		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/resume/" ${libdir}/${tuprocess}/info/resume/"
-		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/dht.dat" ${libdir}/${tuprocess}/info/dht.dat"
-		rsync -avh --progress root@${remoteserver}:${libdir}/${tuprocess}/info/stats.json" ${libdir}/${tuprocess}/info/stats.json"
+		fn_logecho "Copying transmission data in ${ucfgdir}"
+		rsync -avh --progress root@${remoteserver}:"${ucfgdir}/blocklists/" "${ucfgdir}/blocklists/"
+		rsync -avh --progress root@${remoteserver}:"${ucfgdir}/torrents/" "${ucfgdir}/torrents/"
+		rsync -avh --progress root@${remoteserver}:"${ucfgdir}/resume/" "${ucfgdir}/resume/"
+		rsync -avh --progress root@${remoteserver}:"${ucfgdir}/dht.dat" "${ucfgdir}/dht.dat"
+		rsync -avh --progress root@${remoteserver}:"${ucfgdir}/stats.json" "${ucfgdir}/stats.json"
 		fn_logecho "Correcting ownership"
-		find ${userdir} -exec chown ${username}:${username} {} \;
-		find "${libdir}/${tuprocess}/info/" -exec chown ${username}:${username} {} \;
+		find "${userdir}" -exec chown ${username}:${username} {} \;
+		find "${ucfgdir}" -exec chown ${username}:${username} {} \;
 		fn_logecho "Migration done for ${username}!"
 		fn_logecho "You can now start the daemon with:"
 		fn_logecho "./${selfname} start ${username}"
