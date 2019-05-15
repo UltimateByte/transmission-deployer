@@ -69,12 +69,11 @@ The default directory structure is:
 
 
 ## Wishlist/Devlist
-* Be more versatile if user changed default transmission-daemon
-* Add a check to know if default transmission-daemon is started or not (for now it will always close it before the process then restart it after the process)
-* Check if ports are in use
 * Add apaxy file browser for userdir
-* Update transmission server
-* Add quota management
+* Add a check to know if default transmission-daemon is started or not (for now it will always close it before the process then restart it after the process)
+* Check if ports are in use and suggest an unused port
+* Easily enable/disable users
+* Managing removing users with quota image files
 
 # Sample output
 
