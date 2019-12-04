@@ -34,7 +34,7 @@ Tested on Debian 8 & 9, should also work with Ubuntu.
 Download the script and make it executable 
 ````bash
 wget https://raw.githubusercontent.com/UltimateByte/transmission-deployer/master/transmission-deployer
-chmod +x transmssion-deployer
+chmod +x transmission-deployer
 ````
 
 Edit home directory and default user shell if needed
