@@ -358,7 +358,7 @@ fn_remove_user_exists(){
 
 fn_create_user(){
 	fn_remove_user_exists
-	fn_logecho "Home direcotry for this user set to dir: ${userdir}"
+	fn_logecho "Home directory for this user set to dir: ${userdir}"
 	fn_logecho "Create new transmission server for user: ${username}?"
 	fn_prompt_continue_y
 	# Adding user
