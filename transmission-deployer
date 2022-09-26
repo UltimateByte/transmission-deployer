@@ -479,7 +479,7 @@ fn_write_config(){
 	\"bind-address-ipv6\": \"::\",
 	\"blocklist-enabled\": false,
 	\"blocklist-url\": \"http://www.example.com/blocklist\",
-	\"cache-size-mb\": 4,
+	\"cache-size-mb\": 128,
 	\"dht-enabled\": true,
 	\"download-dir\": \"${downloadsdir}\",
 	\"download-limit\": 100,
@@ -492,11 +492,11 @@ fn_write_config(){
 	\"incomplete-dir\": \"${incompletedir}\",
 	\"incomplete-dir-enabled\": true,
 	\"lpd-enabled\": false,
-	\"max-peers-global\": 200,
+	\"max-peers-global\": 500,
 	\"message-level\": 1,
 	\"peer-congestion-algorithm\": \"\",
 	\"peer-id-ttl-hours\": 6,
-	\"peer-limit-global\": 200,
+	\"peer-limit-global\": 250,
 	\"peer-limit-per-torrent\": 50,
 	\"peer-port\": 51413,
 	\"peer-port-random-high\": 65535,
@@ -536,7 +536,7 @@ fn_write_config(){
 	\"upload-limit\": 100,
 	\"upload-limit-enabled\": 0,
 	\"upload-slots-per-torrent\": 50,
-	\"utp-enabled\": true
+	\"utp-enabled\": false
 	}" > "${tuconfig}"
 	
 	# Never too cautious about ownership
