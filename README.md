@@ -3,6 +3,13 @@ Deploy and manage multiple transmission-daemons in Debian based distros.
 Tested on Debian 8 to Debian 12, should also work with Ubuntu.
 
 # Changelog
+
+### 5 April 2023
+* Default download queue disabled (removes limit)
+
+### 5 May 2022
+* Config tweaking: Better cache
+
 ### 12 May 2019
 * Now supports quota (adding, changing)
 * Added migration from remote server functionnality
